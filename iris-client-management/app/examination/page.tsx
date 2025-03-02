@@ -203,7 +203,7 @@ export default function ExaminationPage() {
                               <Label htmlFor="l-axis">AXIS</Label>
                               <Input id="l-axis" placeholder="175" />
                             </div>
-                            <div className="grid gap-2">/></div>
+                            <div className="grid gap-2"></div>
                             <div className="grid gap-2">
                               <Label htmlFor="l-add">ADD</Label>
                               <Input id="l-add" placeholder="+2.00" />
