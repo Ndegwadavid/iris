@@ -1,7 +1,7 @@
 // app/layout.tsx
 "use client"
 
-import { Inter } from "next/font/google"
+import localFont from "next/font/local" // Use localFont instead of Google Fonts
 import "./globals.css"
 import { Sidebar } from "@/components/sidebar"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -13,7 +13,23 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 
-const inter = Inter({ subsets: ["latin"] })
+// Define Inter using local font files from public/fonts
+const inter = localFont({
+  src: [
+    {
+      path: "../public/fonts/InterVariable.ttf", // Variable font for all weights
+      weight: "100 900", // Variable font supports a range of weights
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/interitalic.ttf", // Italic variant
+      weight: "400", // Assuming regular weight for italic
+      style: "italic",
+    },
+  ],
+  variable: "--font-inter", // Optional: for custom CSS usage
+  subsets: ["latin"], // Match your original subset
+})
 
 export default function RootLayout({
   children,
@@ -74,7 +90,7 @@ export default function RootLayout({
                     <X className="h-6 w-6" />
                   </Button>
                 </div>
-                <nav className="flex-1 px-3 py-4 space-y-4"> {/* Changed from space-y-2 to space-y-4 */}
+                <nav className="flex-1 px-3 py-4 space-y-4">
                   <Link href="/" onClick={() => setIsMobileNavOpen(false)}>
                     <Button
                       variant="ghost"
