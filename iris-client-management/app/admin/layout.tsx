@@ -1,7 +1,7 @@
+// app/admin/layout.tsx
 "use client"
 
 import type React from "react"
-
 import { useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { isAuthenticated } from "@/lib/utils/auth"
@@ -30,4 +30,3 @@ export default function AdminLayout({
 
   return <div className="min-h-screen bg-background">{children}</div>
 }
-
