@@ -1,4 +1,3 @@
-// app/layout.tsx
 "use client"
 
 import localFont from "next/font/local" // Use localFont instead of Google Fonts
