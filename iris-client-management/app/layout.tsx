@@ -1,8 +1,9 @@
 "use client"
 
-import localFont from "next/font/local" // Use localFont instead of Google Fonts
+import localFont from "next/font/local"
 import "./globals.css"
 import { Sidebar } from "@/components/sidebar"
+import { MobileNav } from "@/components/mobile-nav"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Eye, Menu, X, Home, Clipboard, Users, ShoppingBag, Search, BarChart, Moon, Sun, Settings } from "lucide-react"
 import { Toaster } from "@/components/ui/toaster"
@@ -12,22 +13,21 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useTheme } from "next-themes"
 
-// Define Inter using local font files from public/fonts
 const inter = localFont({
   src: [
     {
-      path: "../public/fonts/InterVariable.ttf", // Variable font for all weights
-      weight: "100 900", // Variable font supports a range of weights
+      path: "../public/fonts/InterVariable.ttf",
+      weight: "100 900",
       style: "normal",
     },
     {
-      path: "../public/fonts/interitalic.ttf", // Italic variant
-      weight: "400", // Assuming regular weight for italic
+      path: "../public/fonts/interitalic.ttf",
+      weight: "400",
       style: "italic",
     },
   ],
-  variable: "--font-inter", // Optional: for custom CSS usage
-  subsets: ["latin"], // Match your original subset
+  variable: "--font-inter",
+  subsets: ["latin"],
 })
 
 export default function RootLayout({
@@ -40,7 +40,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={cn(inter.className, "bg-background text-foreground")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -160,7 +160,6 @@ export default function RootLayout({
                     className="w-full justify-start hover:bg-muted transition-colors duration-200"
                     onClick={() => {
                       setTheme(theme === "dark" ? "light" : "dark")
-                      setIsMobileNavOpen(false)
                     }}
                   >
                     {theme === "dark" ? (
