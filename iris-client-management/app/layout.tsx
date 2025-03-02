@@ -30,8 +30,7 @@ const inter = localFont({
       style: "italic",
     },
   ],
-  variable: "--font-inter",
-  subsets: ["latin"],
+  variable: "--font-inter"
 })
 
 export default function RootLayout({
