@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     
     # Your apps
+    "users.apps.UsersConfig",
     "clients.apps.ClientsConfig",
 ]
 
