@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "users.authentictaion.CustomJWTAuthentication",
+        "users.authentication.CustomJWTAuthentication",
     ],
 }
 
