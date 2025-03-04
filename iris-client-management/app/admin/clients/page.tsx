@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,7 @@ export default function ClientsPage() {
     client.regNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination (fixed typo: вітCurrentPage → currentPage)
+  // Pagination
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedClients = filteredClients.slice(startIndex, startIndex + itemsPerPage);
@@ -102,7 +102,7 @@ export default function ClientsPage() {
     }
     const clientToEdit = clients.find(client => client.id === clientId);
     console.log("Editing client:", clientToEdit);
-    // Placeholder for a real edit modal
+    // Placeholder for a real edit modal - logs to console for now
   };
 
   // Delete single client
@@ -111,7 +111,7 @@ export default function ClientsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  // Database Integration Section (Commented Out)
+  // Database Integration Section (Commented Out for Frontend-Only Demo)
   /*
   // Fetch clients from the database
   useEffect(() => {
@@ -173,15 +173,6 @@ export default function ClientsPage() {
       console.error("Error updating client:", error);
     }
   };
-
-  // Example usage with database
-  // const confirmDelete = () => {
-  //   deleteClientsFromDB(selectedClients);
-  //   setIsDeleteDialogOpen(false);
-  // };
-  // const handleEditClient = (clientId: number) => {
-  //   updateClientInDB(clientId, { firstName: "Updated Name" }); // Example update
-  // };
   */
 
   return (
