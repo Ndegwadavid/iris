@@ -1,4 +1,4 @@
-Thought for 1 second### Iris Eyewear Client Management System Documentation
+### Iris Eyewear Client Management System Documentation
 
 ## Project Overview
 
