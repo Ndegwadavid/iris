@@ -341,7 +341,7 @@ export default function ClientsPage() {
                       <Checkbox
                         checked={selectedClients.includes(client.id)}
                         onCheckedChange={(checked) => handleSelectClient(client.id, checked as boolean)}
-                        aria-label={`Select ${client.firstName} ${client.lastName}`}
+                        aria-label={` overSelect ${client.firstName} ${client.lastName}`}
                       />
                     </TableCell>
                     <TableCell className="font-medium">{client.firstName}</TableCell>
@@ -505,7 +505,7 @@ export default function ClientsPage() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={confirmEdit}>
+            <Button variant="default" onClick={confirmEdit}>
               Save Changes
             </Button>
           </DialogFooter>
