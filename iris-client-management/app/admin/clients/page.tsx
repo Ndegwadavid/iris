@@ -4,27 +4,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Users, Download, Filter, ChevronLeft, ChevronRight, Mail, Phone, Calendar, Trash2, Edit, AlertTriangle } from "lucide-react";
+import { Users, Download, Filter, ChevronLeft, ChevronRight, Mail, Phone, Calendar } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
 
-// Define the Client type
-type Client = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  regNumber: string;
-  lastAppointment: string;
-};
-
 // Sample client data
-const sampleClients: Client[] = [
+const sampleClients = [
   { id: 1, firstName: "John", lastName: "Doe", email: "john.doe@example.com", phone: "0712345678", regNumber: "M/2025/03/001", lastAppointment: "2025-02-15" },
   { id: 2, firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", phone: "0723456789", regNumber: "M/2025/03/002", lastAppointment: "2025-02-14" },
   { id: 3, firstName: "Michael", lastName: "Brown", email: "michael.b@example.com", phone: "0734567890", regNumber: "M/2025/03/003", lastAppointment: "2025-02-13" },
@@ -52,12 +40,7 @@ export default function ClientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
-  const [clients, setClients] = useState<Client[]>(sampleClients);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [editedFirstName, setEditedFirstName] = useState("");
-  const [editedLastName, setEditedLastName] = useState("");
+  const [clients, setClients] = useState(sampleClients);
 
   // Filter clients
   const filteredClients = clients.filter(client =>
@@ -97,100 +80,61 @@ export default function ClientsPage() {
     link.click();
   };
 
-  // Delete selected clients
-  const handleDeleteSelected = () => {
-    if (selectedClients.length === 0) return;
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    setClients(prev => prev.filter(client => !selectedClients.includes(client.id)));
-    setSelectedClients([]);
-    setIsDeleteDialogOpen(false);
-  };
-
-  // Edit client
-  const handleEditClient = (clientId: number) => {
-    if (selectedClients.length > 1) {
-      alert("Please select only one client to edit.");
-      return;
-    }
-    const clientToEdit = clients.find(client => client.id === clientId);
-    if (clientToEdit) {
-      setEditingClient(clientToEdit);
-      setEditedFirstName(clientToEdit.firstName);
-      setEditedLastName(clientToEdit.lastName);
-      setIsEditDialogOpen(true);
-    }
-  };
-
-  // Delete single client
-  const handleDeleteClient = (clientId: number) => {
-    setSelectedClients([clientId]);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // Confirm edit and update client name
-  const confirmEdit = () => {
-    if (!editingClient) return;
-    setClients(prev =>
-      prev.map(client =>
-        client.id === editingClient.id
-          ? { ...client, firstName: editedFirstName, lastName: editedLastName }
-          : client
-      )
-    );
-    setIsEditDialogOpen(false);
-    setEditingClient(null);
-    setEditedFirstName("");
-    setEditedLastName("");
-  };
-
   // Database Integration Section (Commented Out)
   /*
-  // Fetch clients from the database on component mount
+  // This section demonstrates how to fetch clients from a database
+  // You'll need to uncomment and configure this based on your backend setup
+  
   useEffect(() => {
     const fetchClients = async () => {
       try {
+        // Option 1: Fetch from a REST API endpoint
+        // Replace '/api/clients' with your actual endpoint
         const response = await fetch('/api/clients', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${yourAuthToken}`, // Uncomment and add token if required
+            // Add authentication headers if needed
+            // 'Authorization': `Bearer ${yourAuthToken}`,
           },
         });
         if (!response.ok) throw new Error('Failed to fetch clients');
-        const data: Client[] = await response.json();
+        const data = await response.json();
         setClients(data);
+
+        // Option 2: Using Prisma (Server-side, requires an API route)
+        // This would typically live in an API route (e.g., pages/api/clients.ts)
+        // Example API route code:
+        // import { PrismaClient } from '@prisma/client';
+        // const prisma = new PrismaClient();
+        // export default async function handler(req, res) {
+        //   const clients = await prisma.client.findMany({
+        //     select: {
+        //       id: true,
+        //       firstName: true,
+        //       lastName: true,
+        //       email: true,
+        //       phone: true,
+        //       regNumber: true,
+        //       lastAppointment: true,
+        //     },
+        //   });
+        //   res.status(200).json(clients);
+        // }
+        // Then fetch from '/api/clients' as above
+
       } catch (error) {
         console.error("Error fetching clients:", error);
-        setClients(sampleClients); // Fallback to sample data on error
+        // Optionally show an error toast or fallback to sample data
+        setClients(sampleClients);
       }
     };
 
     fetchClients();
-  }, []);
+  }, []); // Empty dependency array means it runs once on mount
 
-  // Delete clients from the database
-  const deleteClientsFromDB = async (ids: number[]) => {
-    try {
-      const response = await fetch('/api/clients', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ids }),
-      });
-      if (!response.ok) throw new Error('Failed to delete clients');
-      setClients(prev => prev.filter(client => !ids.includes(client.id)));
-      setSelectedClients([]);
-    } catch (error) {
-      console.error("Error deleting clients:", error);
-    }
-  };
-
-  // Update client in the database
-  const updateClientInDB = async (clientId: number, updates: Partial<Client>) => {
+  // To update a client (example: marking as selected or deleted)
+  const updateClient = async (clientId: number, updates: Partial<typeof sampleClients[0]>) => {
     try {
       const response = await fetch(`/api/clients/${clientId}`, {
         method: 'PATCH',
@@ -200,7 +144,7 @@ export default function ClientsPage() {
         body: JSON.stringify(updates),
       });
       if (!response.ok) throw new Error('Failed to update client');
-      const updatedClient: Client = await response.json();
+      const updatedClient = await response.json();
       setClients(prev => prev.map(client => 
         client.id === updatedClient.id ? updatedClient : client
       ));
@@ -209,18 +153,10 @@ export default function ClientsPage() {
     }
   };
 
-  // Example usage with database
-  // const confirmDelete = () => {
-  //   deleteClientsFromDB(selectedClients);
-  //   setIsDeleteDialogOpen(false);
-  // };
-  // const confirmEdit = () => {
-  //   if (!editingClient) return;
-  //   updateClientInDB(editingClient.id, { firstName: editedFirstName, lastName: editedLastName });
-  //   setIsEditDialogOpen(false);
-  //   setEditingClient(null);
-  //   setEditedFirstName("");
-  //   setEditedLastName("");
+  // Example usage in handleSelectClient:
+  // handleSelectClient = (id: number, checked: boolean) => {
+  //   setSelectedClients(prev => checked ? [...prev, id] : prev.filter(clientId => clientId !== id));
+  //   updateClient(id, { selected: checked }); // Hypothetical 'selected' field
   // };
   */
 
@@ -261,49 +197,26 @@ export default function ClientsPage() {
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              {selectedClients.length > 0 && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteSelected}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Selected
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditClient(selectedClients[0])}
-                    disabled={selectedClients.length !== 1}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Selected
-                  </Button>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Show</span>
-                <Select
-                  value={itemsPerPage.toString()}
-                  onValueChange={(value) => {
-                    setItemsPerPage(Number(value));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[70px] rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="15">15</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-muted-foreground">per page</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Show</span>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[70px] rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">per page</span>
             </div>
           </div>
         </CardHeader>
@@ -341,7 +254,7 @@ export default function ClientsPage() {
                       <Checkbox
                         checked={selectedClients.includes(client.id)}
                         onCheckedChange={(checked) => handleSelectClient(client.id, checked as boolean)}
-                        aria-label={` overSelect ${client.firstName} ${client.lastName}`}
+                        aria-label={`Select ${client.firstName} ${client.lastName}`}
                       />
                     </TableCell>
                     <TableCell className="font-medium">{client.firstName}</TableCell>
@@ -358,22 +271,6 @@ export default function ClientsPage() {
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm" className="hover:text-primary">View</Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="hover:text-primary"
-                          onClick={() => handleEditClient(client.id)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="hover:text-destructive"
-                          onClick={() => handleDeleteClient(client.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button variant="ghost" size="sm" className="hover:text-primary">
@@ -442,75 +339,6 @@ export default function ClientsPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Confirm Deletion
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete {selectedClients.length} client{selectedClients.length > 1 ? "s" : ""}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Client Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5 text-primary" />
-              Edit Client
-            </DialogTitle>
-            <DialogDescription>
-              Update the name for {editingClient?.firstName} {editingClient?.lastName}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
-              <Input
-                id="firstName"
-                value={editedFirstName}
-                onChange={(e) => setEditedFirstName(e.target.value)}
-                className="rounded-lg border-muted focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
-              <Input
-                id="lastName"
-                value={editedLastName}
-                onChange={(e) => setEditedLastName(e.target.value)}
-                className="rounded-lg border-muted focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Email: {editingClient?.email} (not editable in this demo)
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="default" onClick={confirmEdit}>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
