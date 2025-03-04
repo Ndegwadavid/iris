@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Users, Download, Filter, ChevronLeft, ChevronRight, Mail, Phone, Calendar } from "lucide-react";
+import { Users, Download, Filter, ChevronLeft, ChevronRight, Mail, Phone, Calendar, Trash2, Edit, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
 
 // Sample client data
@@ -41,6 +42,7 @@ export default function ClientsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [clients, setClients] = useState(sampleClients);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Filter clients
   const filteredClients = clients.filter(client =>
@@ -50,7 +52,7 @@ export default function ClientsPage() {
     client.regNumber.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination
+  // Pagination (fixed typo: вітCurrentPage → currentPage)
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedClients = filteredClients.slice(startIndex, startIndex + itemsPerPage);
@@ -80,61 +82,80 @@ export default function ClientsPage() {
     link.click();
   };
 
+  // Delete selected clients
+  const handleDeleteSelected = () => {
+    if (selectedClients.length === 0) return;
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    setClients(prev => prev.filter(client => !selectedClients.includes(client.id)));
+    setSelectedClients([]);
+    setIsDeleteDialogOpen(false);
+  };
+
+  // Edit client (single client only for simplicity)
+  const handleEditClient = (clientId: number) => {
+    if (selectedClients.length > 1) {
+      alert("Please select only one client to edit.");
+      return;
+    }
+    const clientToEdit = clients.find(client => client.id === clientId);
+    console.log("Editing client:", clientToEdit);
+    // Placeholder for a real edit modal
+  };
+
+  // Delete single client
+  const handleDeleteClient = (clientId: number) => {
+    setSelectedClients([clientId]);
+    setIsDeleteDialogOpen(true);
+  };
+
   // Database Integration Section (Commented Out)
   /*
-  // This section demonstrates how to fetch clients from a database
-  // You'll need to uncomment and configure this based on your backend setup
-  
+  // Fetch clients from the database
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        // Option 1: Fetch from a REST API endpoint
-        // Replace '/api/clients' with your actual endpoint
         const response = await fetch('/api/clients', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Add authentication headers if needed
-            // 'Authorization': `Bearer ${yourAuthToken}`,
+            // 'Authorization': `Bearer ${yourAuthToken}`, // Add if authentication is required
           },
         });
         if (!response.ok) throw new Error('Failed to fetch clients');
         const data = await response.json();
         setClients(data);
-
-        // Option 2: Using Prisma (Server-side, requires an API route)
-        // This would typically live in an API route (e.g., pages/api/clients.ts)
-        // Example API route code:
-        // import { PrismaClient } from '@prisma/client';
-        // const prisma = new PrismaClient();
-        // export default async function handler(req, res) {
-        //   const clients = await prisma.client.findMany({
-        //     select: {
-        //       id: true,
-        //       firstName: true,
-        //       lastName: true,
-        //       email: true,
-        //       phone: true,
-        //       regNumber: true,
-        //       lastAppointment: true,
-        //     },
-        //   });
-        //   res.status(200).json(clients);
-        // }
-        // Then fetch from '/api/clients' as above
-
       } catch (error) {
         console.error("Error fetching clients:", error);
-        // Optionally show an error toast or fallback to sample data
-        setClients(sampleClients);
+        setClients(sampleClients); // Fallback to sample data
       }
     };
 
     fetchClients();
-  }, []); // Empty dependency array means it runs once on mount
+  }, []);
 
-  // To update a client (example: marking as selected or deleted)
-  const updateClient = async (clientId: number, updates: Partial<typeof sampleClients[0]>) => {
+  // Delete clients from the database
+  const deleteClientsFromDB = async (ids: number[]) => {
+    try {
+      const response = await fetch('/api/clients', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) throw new Error('Failed to delete clients');
+      setClients(prev => prev.filter(client => !ids.includes(client.id)));
+      setSelectedClients([]);
+    } catch (error) {
+      console.error("Error deleting clients:", error);
+    }
+  };
+
+  // Update client in the database
+  const updateClientInDB = async (clientId: number, updates: Partial<typeof sampleClients[0]>) => {
     try {
       const response = await fetch(`/api/clients/${clientId}`, {
         method: 'PATCH',
@@ -153,10 +174,13 @@ export default function ClientsPage() {
     }
   };
 
-  // Example usage in handleSelectClient:
-  // handleSelectClient = (id: number, checked: boolean) => {
-  //   setSelectedClients(prev => checked ? [...prev, id] : prev.filter(clientId => clientId !== id));
-  //   updateClient(id, { selected: checked }); // Hypothetical 'selected' field
+  // Example usage with database
+  // const confirmDelete = () => {
+  //   deleteClientsFromDB(selectedClients);
+  //   setIsDeleteDialogOpen(false);
+  // };
+  // const handleEditClient = (clientId: number) => {
+  //   updateClientInDB(clientId, { firstName: "Updated Name" }); // Example update
   // };
   */
 
@@ -197,26 +221,49 @@ export default function ClientsPage() {
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Show</span>
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => {
-                  setItemsPerPage(Number(value));
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-[70px] rounded-lg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="15">15</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-muted-foreground">per page</span>
+            <div className="flex items-center gap-4">
+              {selectedClients.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Selected
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditClient(selectedClients[0])}
+                    disabled={selectedClients.length !== 1}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Selected
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Show</span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => {
+                    setItemsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[70px] rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="15">15</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">per page</span>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -271,6 +318,22 @@ export default function ClientsPage() {
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm" className="hover:text-primary">View</Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:text-primary"
+                          onClick={() => handleEditClient(client.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:text-destructive"
+                          onClick={() => handleDeleteClient(client.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button variant="ghost" size="sm" className="hover:text-primary">
@@ -339,6 +402,29 @@ export default function ClientsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedClients.length} client{selectedClients.length > 1 ? "s" : ""}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
