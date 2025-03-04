@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,9 +40,10 @@ export default function ClientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
+  const [clients, setClients] = useState(sampleClients);
 
   // Filter clients
-  const filteredClients = sampleClients.filter(client =>
+  const filteredClients = clients.filter(client =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     client.phone.includes(searchQuery) ||
@@ -78,6 +79,86 @@ export default function ClientsPage() {
     link.download = "clients_export.csv";
     link.click();
   };
+
+  // Database Integration Section (Commented Out)
+  /*
+  // This section demonstrates how to fetch clients from a database
+  // You'll need to uncomment and configure this based on your backend setup
+  
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        // Option 1: Fetch from a REST API endpoint
+        // Replace '/api/clients' with your actual endpoint
+        const response = await fetch('/api/clients', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add authentication headers if needed
+            // 'Authorization': `Bearer ${yourAuthToken}`,
+          },
+        });
+        if (!response.ok) throw new Error('Failed to fetch clients');
+        const data = await response.json();
+        setClients(data);
+
+        // Option 2: Using Prisma (Server-side, requires an API route)
+        // This would typically live in an API route (e.g., pages/api/clients.ts)
+        // Example API route code:
+        // import { PrismaClient } from '@prisma/client';
+        // const prisma = new PrismaClient();
+        // export default async function handler(req, res) {
+        //   const clients = await prisma.client.findMany({
+        //     select: {
+        //       id: true,
+        //       firstName: true,
+        //       lastName: true,
+        //       email: true,
+        //       phone: true,
+        //       regNumber: true,
+        //       lastAppointment: true,
+        //     },
+        //   });
+        //   res.status(200).json(clients);
+        // }
+        // Then fetch from '/api/clients' as above
+
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        // Optionally show an error toast or fallback to sample data
+        setClients(sampleClients);
+      }
+    };
+
+    fetchClients();
+  }, []); // Empty dependency array means it runs once on mount
+
+  // To update a client (example: marking as selected or deleted)
+  const updateClient = async (clientId: number, updates: Partial<typeof sampleClients[0]>) => {
+    try {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update client');
+      const updatedClient = await response.json();
+      setClients(prev => prev.map(client => 
+        client.id === updatedClient.id ? updatedClient : client
+      ));
+    } catch (error) {
+      console.error("Error updating client:", error);
+    }
+  };
+
+  // Example usage in handleSelectClient:
+  // handleSelectClient = (id: number, checked: boolean) => {
+  //   setSelectedClients(prev => checked ? [...prev, id] : prev.filter(clientId => clientId !== id));
+  //   updateClient(id, { selected: checked }); // Hypothetical 'selected' field
+  // };
+  */
 
   return (
     <div className="space-y-6">
