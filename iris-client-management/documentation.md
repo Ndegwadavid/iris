@@ -21,6 +21,11 @@ This documentation provides detailed information about the system's endpoints an
 
 -- More detailed on the UI for reception
 
+regsitration of clients follows a convention of 
+- M/year/month/cleintID
+
+for this case,,, the values of couurse will change as we move to the next month or year,, the M stands for Moi Avenue in htis case,, so in cases where company has differnet branch lets sya another branch in Kisumu can ba K/2025/Month/ID 
+
 **Access:** Sales team members
 
 ### `/sales`
