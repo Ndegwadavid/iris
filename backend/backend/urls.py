@@ -31,7 +31,7 @@ urlpatterns = [
     path('api/v001/', include('clients.api.urls')), # Clients app routes
     path('api/v001/auth/', lambda request: redirect('/')), # redirect to '/'
     path('api/v001/auth/', include('djoser.urls')), # Djoser  routes
-    path('api/v001/auth/', include('djoser.urls.jwt')), # Djoser JWT auth  routes
+    path('api/v001/auth/', include('users.urls.jwt')), # Custom Djoser JWT auth  routes
 ]
 
 

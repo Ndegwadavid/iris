@@ -1,4 +1,7 @@
 from pathlib import Path
+from datetime import timedelta
+from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-uc+&ntt0i6b4k(olr@ov@kwr1^w(t#g_)zwlqiekf&q0%halac'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -17,7 +20,6 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -25,14 +27,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third-party apps
     "rest_framework",
-    "rest_framework.authtoken",
     "djoser",
     "corsheaders",
     "drf_yasg",
-    
+    "rest_framework_simplejwt.token_blacklist", 
+
     # Your apps
     "users.apps.UsersConfig",
     "clients.apps.ClientsConfig",
@@ -50,7 +52,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
     # Custom Middlewares
-    'middlewares.custom_404.Custom404Middleware'
+    'middlewares.custom_404.Custom404Middleware',
+    'middlewares.is_admin_create_user.IsAdminCreateUser'
+   
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -119,7 +123,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -128,17 +134,36 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.UserAccount'
 
-
 # CORS settings
-
+CORS_ALLOW_CREDENTIALS = True 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Next.js frontend
+    "http://localhost:3000",  # React/Next.js frontend
     "http://127.0.0.1:3000",
-    "http://localhost:8000",  # Django backend
+    "http://localhost:8000",  # Django backend (useful for local testing)
 ]
 
-# DJOSER settings
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
+    "x-csrftoken",
+]
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+
+# DJOSER settings
 DJOSER = {
     "LOGIN_FIELD": "email",
     "USER_CREATE_PASSWORD_RETYPE": True,
@@ -146,14 +171,32 @@ DJOSER = {
     "SEND_ACTIVATION_EMAIL": False,
 }
 
-# RESTFRAMEWORK settings
+# Simple JWT Config
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    'RESFRESH_TOKEN_LIFETIME' : timedelta(days=2),
+    "ROTATE_REFRESH_TOKENS" : True,
+    "BLACKLIST_AFTER_ROTATION" : True,
+    "AUTH_HEADER_TYPES": ("JWT", 'Bearer'),
+    "SIGNING_KEY": config('SECRET_KEY'),
+}
 
+
+# RESTFRAMEWORK settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "users.authentication.CustomJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "users.authentication.CustomJWTAuthentication",
+        "rest_framework.permissions.IsAuthenticated", 
     ],
 }
 
+#  Cookies configs
+AUTH_COOKIE = 'access'
+AUTH_COOKIE_ACCESS_MAX_AGE = 60 * 60 * 1
+AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24
+AUTH_COOKIE_SECURE = True
+AUTH_COOKIE_HTTP_ONLY = True
+AUTH_COOKIE_SAMESITE = 'None'
+AUTH_COOKIE_PATH = '/'
