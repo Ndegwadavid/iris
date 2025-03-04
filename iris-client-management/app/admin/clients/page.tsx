@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -55,7 +55,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>(sampleClients);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null); // Explicitly typed as Client | null
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editedFirstName, setEditedFirstName] = useState("");
   const [editedLastName, setEditedLastName] = useState("");
 
@@ -116,7 +116,7 @@ export default function ClientsPage() {
       return;
     }
     const clientToEdit = clients.find(client => client.id === clientId);
-    if (clientToEdit) { // Check to avoid undefined
+    if (clientToEdit) {
       setEditingClient(clientToEdit);
       setEditedFirstName(clientToEdit.firstName);
       setEditedLastName(clientToEdit.lastName);
@@ -145,6 +145,84 @@ export default function ClientsPage() {
     setEditedFirstName("");
     setEditedLastName("");
   };
+
+  // Database Integration Section (Commented Out)
+  /*
+  // Fetch clients from the database on component mount
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/clients', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // 'Authorization': `Bearer ${yourAuthToken}`, // Uncomment and add token if required
+          },
+        });
+        if (!response.ok) throw new Error('Failed to fetch clients');
+        const data: Client[] = await response.json();
+        setClients(data);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        setClients(sampleClients); // Fallback to sample data on error
+      }
+    };
+
+    fetchClients();
+  }, []);
+
+  // Delete clients from the database
+  const deleteClientsFromDB = async (ids: number[]) => {
+    try {
+      const response = await fetch('/api/clients', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) throw new Error('Failed to delete clients');
+      setClients(prev => prev.filter(client => !ids.includes(client.id)));
+      setSelectedClients([]);
+    } catch (error) {
+      console.error("Error deleting clients:", error);
+    }
+  };
+
+  // Update client in the database
+  const updateClientInDB = async (clientId: number, updates: Partial<Client>) => {
+    try {
+      const response = await fetch(`/api/clients/${clientId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update client');
+      const updatedClient: Client = await response.json();
+      setClients(prev => prev.map(client => 
+        client.id === updatedClient.id ? updatedClient : client
+      ));
+    } catch (error) {
+      console.error("Error updating client:", error);
+    }
+  };
+
+  // Example usage with database
+  // const confirmDelete = () => {
+  //   deleteClientsFromDB(selectedClients);
+  //   setIsDeleteDialogOpen(false);
+  // };
+  // const confirmEdit = () => {
+  //   if (!editingClient) return;
+  //   updateClientInDB(editingClient.id, { firstName: editedFirstName, lastName: editedLastName });
+  //   setIsEditDialogOpen(false);
+  //   setEditingClient(null);
+  //   setEditedFirstName("");
+  //   setEditedLastName("");
+  // };
+  */
 
   return (
     <div className="space-y-6">
