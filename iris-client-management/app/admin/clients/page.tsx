@@ -12,8 +12,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
 
+// Define the Client type
+type Client = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  regNumber: string;
+  lastAppointment: string;
+};
+
 // Sample client data
-const sampleClients = [
+const sampleClients: Client[] = [
   { id: 1, firstName: "John", lastName: "Doe", email: "john.doe@example.com", phone: "0712345678", regNumber: "M/2025/03/001", lastAppointment: "2025-02-15" },
   { id: 2, firstName: "Jane", lastName: "Smith", email: "jane.smith@example.com", phone: "0723456789", regNumber: "M/2025/03/002", lastAppointment: "2025-02-14" },
   { id: 3, firstName: "Michael", lastName: "Brown", email: "michael.b@example.com", phone: "0734567890", regNumber: "M/2025/03/003", lastAppointment: "2025-02-13" },
@@ -41,10 +52,10 @@ export default function ClientsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
-  const [clients, setClients] = useState(sampleClients);
+  const [clients, setClients] = useState<Client[]>(sampleClients);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null); // Explicitly typed as Client | null
   const [editedFirstName, setEditedFirstName] = useState("");
   const [editedLastName, setEditedLastName] = useState("");
 
@@ -105,10 +116,12 @@ export default function ClientsPage() {
       return;
     }
     const clientToEdit = clients.find(client => client.id === clientId);
-    setEditingClient(clientToEdit);
-    setEditedFirstName(clientToEdit.firstName);
-    setEditedLastName(clientToEdit.lastName);
-    setIsEditDialogOpen(true);
+    if (clientToEdit) { // Check to avoid undefined
+      setEditingClient(clientToEdit);
+      setEditedFirstName(clientToEdit.firstName);
+      setEditedLastName(clientToEdit.lastName);
+      setIsEditDialogOpen(true);
+    }
   };
 
   // Delete single client
