@@ -43,6 +43,10 @@ export default function ClientsPage() {
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
   const [clients, setClients] = useState(sampleClients);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+  const [editedFirstName, setEditedFirstName] = useState("");
+  const [editedLastName, setEditedLastName] = useState("");
 
   // Filter clients
   const filteredClients = clients.filter(client =>
@@ -94,15 +98,17 @@ export default function ClientsPage() {
     setIsDeleteDialogOpen(false);
   };
 
-  // Edit client (single client only for simplicity)
+  // Edit client
   const handleEditClient = (clientId: number) => {
     if (selectedClients.length > 1) {
       alert("Please select only one client to edit.");
       return;
     }
     const clientToEdit = clients.find(client => client.id === clientId);
-    console.log("Editing client:", clientToEdit);
-    // Placeholder for a real edit modal - logs to console for now
+    setEditingClient(clientToEdit);
+    setEditedFirstName(clientToEdit.firstName);
+    setEditedLastName(clientToEdit.lastName);
+    setIsEditDialogOpen(true);
   };
 
   // Delete single client
@@ -111,69 +117,21 @@ export default function ClientsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  // Database Integration Section (Commented Out for Frontend-Only Demo)
-  /*
-  // Fetch clients from the database
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await fetch('/api/clients', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${yourAuthToken}`, // Add if authentication is required
-          },
-        });
-        if (!response.ok) throw new Error('Failed to fetch clients');
-        const data = await response.json();
-        setClients(data);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-        setClients(sampleClients); // Fallback to sample data
-      }
-    };
-
-    fetchClients();
-  }, []);
-
-  // Delete clients from the database
-  const deleteClientsFromDB = async (ids: number[]) => {
-    try {
-      const response = await fetch('/api/clients', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ids }),
-      });
-      if (!response.ok) throw new Error('Failed to delete clients');
-      setClients(prev => prev.filter(client => !ids.includes(client.id)));
-      setSelectedClients([]);
-    } catch (error) {
-      console.error("Error deleting clients:", error);
-    }
+  // Confirm edit and update client name
+  const confirmEdit = () => {
+    if (!editingClient) return;
+    setClients(prev =>
+      prev.map(client =>
+        client.id === editingClient.id
+          ? { ...client, firstName: editedFirstName, lastName: editedLastName }
+          : client
+      )
+    );
+    setIsEditDialogOpen(false);
+    setEditingClient(null);
+    setEditedFirstName("");
+    setEditedLastName("");
   };
-
-  // Update client in the database
-  const updateClientInDB = async (clientId: number, updates: Partial<typeof sampleClients[0]>) => {
-    try {
-      const response = await fetch(`/api/clients/${clientId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      });
-      if (!response.ok) throw new Error('Failed to update client');
-      const updatedClient = await response.json();
-      setClients(prev => prev.map(client => 
-        client.id === updatedClient.id ? updatedClient : client
-      ));
-    } catch (error) {
-      console.error("Error updating client:", error);
-    }
-  };
-  */
 
   return (
     <div className="space-y-6">
@@ -412,6 +370,52 @@ export default function ClientsPage() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-primary" />
+              Edit Client
+            </DialogTitle>
+            <DialogDescription>
+              Update the name for {editingClient?.firstName} {editingClient?.lastName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <label htmlFor="firstName" className="text-sm font-medium">First Name</label>
+              <Input
+                id="firstName"
+                value={editedFirstName}
+                onChange={(e) => setEditedFirstName(e.target.value)}
+                className="rounded-lg border-muted focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="lastName" className="text-sm font-medium">Last Name</label>
+              <Input
+                id="lastName"
+                value={editedLastName}
+                onChange={(e) => setEditedLastName(e.target.value)}
+                className="rounded-lg border-muted focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Email: {editingClient?.email} (not editable in this demo)
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={confirmEdit}>
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
