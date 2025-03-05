@@ -29,5 +29,5 @@ class ExaminationSerializer(serializers.ModelSerializer):
 class ClientRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['first_name', 'last_name', 'dob', 'phone_number', 'email', 'location', 'registered_by', 'gender', 'previous_prescription']
+        fields = ['first_name', 'last_name', 'dob', 'phone_number', 'email', 'location', 'registered_by', 'gender', 'previous_prescription', 'last_examination_date']
         read_only_fields = ['id', 'created_at', 'updated_at']

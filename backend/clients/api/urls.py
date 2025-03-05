@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterClientView, RegisterClientExaminationView, RetrievAllExaminations, RetrieveClientExaminations,BookExistingCientForExamination
+from .views import RegisterClientView, RegisterClientExaminationView, RetrievAllExaminations, RetrieveClientExaminations,BookExistingCientForExamination, SearchClientView
 
 app_name = "clients"
 
@@ -9,6 +9,7 @@ urlpatterns = [
     path('examinations/', RetrievAllExaminations.as_view(), name="all_examinations"),
     path('examinations/<uuid:id>/', RetrieveClientExaminations.as_view(), name="client_examinations"),
     path('examination/<uuid:id>/book/', BookExistingCientForExamination.as_view(), name="book_existing_client"),
+    path('search/', SearchClientView.as_view(), name='search_client')
 ]
 
 
