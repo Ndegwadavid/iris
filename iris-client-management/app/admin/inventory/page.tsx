@@ -14,7 +14,7 @@ export default function InventoryPage() {
         </div>
         <Button>
           <Glasses className="mr-2 h-4 w-4" />
-          Add Item
+          Add Inventory
         </Button>
       </div>
       <Card>
