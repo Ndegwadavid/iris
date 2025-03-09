@@ -1,3 +1,6 @@
+<<<<<<< main
+### Optical Company SAAS
+=======
 ### Iris Eyewear Client Management System Documentation
 
 ## Project Overview
@@ -266,3 +269,4 @@ For support or questions:
 
 
 
+>>>>>>> backend

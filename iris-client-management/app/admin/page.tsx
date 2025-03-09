@@ -7,16 +7,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Activity,
   BarChart3,
-  Building2,
   Download,
   Eye,
   FileText,
-  LayoutDashboard,
-  LogOut,
-  Settings,
+  ShoppingBag,
+  Clock,
   Users,
+  Plus,
 } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useState } from "react"
 import { SAMPLE_STAFF } from "@/lib/constants"
 import { formatCurrency } from "@/lib/utils/format"
 
@@ -28,58 +31,22 @@ const dashboardData = {
   clientGrowth: 18.2,
   totalSales: 249,
   salesGrowth: 12.5,
-  activePrescriptions: 412,
-  prescriptionGrowth: 7.4,
+  pendingOrders: 15,
+  ordersGrowth: 5.3,
 }
 
 export default function AdminPage() {
-  const router = useRouter()
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
+  const [dateRange, setDateRange] = useState("month")
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated")
-    router.push("/admin/login")
+  const handleAddStaffSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Mock submission
+    setIsAddStaffOpen(false)
   }
 
   return (
     <div className="h-screen flex dark:bg-background">
-      {/* Sidebar */}
-      <div className="w-64 border-r flex flex-col">
-        <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
-            <Building2 className="h-6 w-6" />
-            Admin Panel
-          </h2>
-        </div>
-        <div className="flex-1 p-4 space-y-2">
-          <Button variant="ghost" className="w-full justify-start">
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Users className="mr-2 h-4 w-4" />
-            Staff Management
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <FileText className="mr-2 h-4 w-4" />
-            Reports
-          </Button>
-          <Button variant="ghost" className="w-full justify-start">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
-        </div>
-        <div className="p-4 border-t space-y-2">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-sm text-muted-foreground">Theme</span>
-            <ThemeToggle />
-          </div>
-          <Button variant="ghost" className="w-full justify-start text-red-500" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-6 space-y-6">
@@ -88,10 +55,23 @@ export default function AdminPage() {
               <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
               <p className="text-muted-foreground">Manage your optical business</p>
             </div>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export Data
-            </Button>
+            <div className="flex items-center gap-4">
+              <Select defaultValue={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="quarter">This Quarter</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export Data
+              </Button>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -127,12 +107,12 @@ export default function AdminPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Prescriptions</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+{dashboardData.activePrescriptions}</div>
-                <p className="text-xs text-muted-foreground">+{dashboardData.prescriptionGrowth}% from last month</p>
+                <div className="text-2xl font-bold">+{dashboardData.pendingOrders}</div>
+                <p className="text-xs text-muted-foreground">+{dashboardData.ordersGrowth}% from last month</p>
               </CardContent>
             </Card>
           </div>
@@ -142,6 +122,7 @@ export default function AdminPage() {
               <TabsTrigger value="staff">Staff Management</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="activity">Recent Activity</TabsTrigger>
             </TabsList>
 
             <TabsContent value="staff" className="space-y-4">
@@ -152,7 +133,48 @@ export default function AdminPage() {
                       <CardTitle>Staff Members</CardTitle>
                       <CardDescription>Manage employee accounts and permissions</CardDescription>
                     </div>
-                    <Button>Add Staff</Button>
+                    <Popover open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
+                      <PopoverTrigger asChild>
+                        <Button onClick={() => setIsAddStaffOpen(true)}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Staff
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-4 border-2 border-muted rounded-lg shadow-lg bg-background">
+                        <form onSubmit={handleAddStaffSubmit} className="space-y-4">
+                          <h3 className="font-semibold text-lg">Add New Staff</h3>
+                          <div className="grid gap-2">
+                            <Label htmlFor="firstName">First Name</Label>
+                            <Input id="firstName" placeholder="John" required />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="lastName">Last Name</Label>
+                            <Input id="lastName" placeholder="Doe" required />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="role">Role</Label>
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="optometrist">Optometrist</SelectItem>
+                                <SelectItem value="sales">Sales</SelectItem>
+                                <SelectItem value="storekeeper">Store Keeper</SelectItem>
+                                <SelectItem value="marketing">Marketing</SelectItem>
+                                <SelectItem value="engineering">Engineering</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setIsAddStaffOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button type="submit">Add Staff</Button>
+                          </div>
+                        </form>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -217,10 +239,39 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="activity" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Track recent staff actions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { user: "John Doe", action: "Added a new client", time: "10 minutes ago" },
+                      { user: "Jane Smith", action: "Processed a sale", time: "1 hour ago" },
+                      { user: "Mike Brown", action: "Updated inventory", time: "2 hours ago" },
+                    ].map((activity, index) => (
+                      <div key={index} className="flex items-start gap-4">
+                        <div className="h-2 w-2 bg-primary rounded-full mt-2" />
+                        <div>
+                          <p className="text-sm font-medium">{activity.user}</p>
+                          <p className="text-sm text-muted-foreground">{activity.action}</p>
+                          <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {activity.time}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
     </div>
   )
 }
-
