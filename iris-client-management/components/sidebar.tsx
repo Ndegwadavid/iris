@@ -1,4 +1,3 @@
-// components/sidebar.tsx
 "use client"
 
 import Link from "next/link"
@@ -28,7 +27,7 @@ export function Sidebar() {
         </h2>
         <p className="text-sm text-muted-foreground">Eyewear Management</p>
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-4"> {/* Changed from space-y-2 to space-y-4 */}
+      <nav className="flex-1 px-3 py-4 space-y-4">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <Button

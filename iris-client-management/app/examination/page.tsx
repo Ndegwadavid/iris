@@ -1,58 +1,56 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Search, Eye, CheckCircle, Clock } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Search, Eye, CheckCircle, Clock } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 // Dummy data for examinations
 const pendingExaminations = [
   { id: 1, name: "John Doe", time: "10:30 AM", doctor: "Dr. Smith" },
   { id: 2, name: "Jane Smith", time: "11:15 AM", doctor: "Dr. Johnson" },
   { id: 3, name: "Michael Brown", time: "1:45 PM", doctor: "Dr. Williams" },
-]
+];
 
 const completedExaminations = [
   { id: 4, name: "Sarah Wilson", time: "9:00 AM", doctor: "Dr. Smith" },
   { id: 5, name: "Robert Davis", time: "9:45 AM", doctor: "Dr. Johnson" },
-]
+];
 
 export default function ExaminationPage() {
-  const [activeTab, setActiveTab] = useState("pending")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedClient, setSelectedClient] = useState<any>(null)
-  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState("pending");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const { toast } = useToast();
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // In a real app, this would search the database
+    e.preventDefault();
     toast({
       title: "Search results",
       description: `Found 3 clients matching "${searchQuery}"`,
-    })
-  }
+    });
+  };
 
   const handleSaveRecord = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     toast({
       title: "Examination record saved",
       description: "The prescription has been saved successfully",
-    })
-    setSelectedClient(null)
-    setActiveTab("completed")
-  }
+    });
+    setSelectedClient(null);
+    setActiveTab("completed");
+  };
 
   const startExamination = (client: any) => {
-    setSelectedClient(client)
-  }
+    setSelectedClient(client);
+  };
 
   return (
     <div className="space-y-6">
@@ -203,7 +201,6 @@ export default function ExaminationPage() {
                               <Label htmlFor="l-axis">AXIS</Label>
                               <Input id="l-axis" placeholder="175" />
                             </div>
-                            <div className="grid gap-2">/></div>
                             <div className="grid gap-2">
                               <Label htmlFor="l-add">ADD</Label>
                               <Input id="l-add" placeholder="+2.00" />
@@ -262,6 +259,5 @@ export default function ExaminationPage() {
       </div>
       <Toaster />
     </div>
-  )
+  );
 }
-
