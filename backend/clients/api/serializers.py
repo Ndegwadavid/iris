@@ -35,6 +35,10 @@ class ClientRegistrationSerializer(serializers.ModelSerializer):
         
 
 class SalesSerializer(serializers.ModelSerializer):
+    examination = serializers.PrimaryKeyRelatedField(
+        queryset=Examination.objects.all(),    
+    )
+
     class Meta:
         model = Sales
         fields = '__all__'
@@ -43,7 +47,20 @@ class SalesSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """ Ensure valid M-Pesa transaction code if M-Pesa is used. """
         if data.get("advance_payment_method") == "Mpesa" and not data.get("mpesa_transaction_code"):
-            raise serializers.ValidationError("M-Pesa transaction code is required for M-Pesa payments.")
+            raise serializers.ValidationError({"mpesa_transaction_code": "M-Pesa transaction code is required for M-Pesa payments."})
+    
+    
+        # Only validate `examination` during creation
+        if self.instance is None:  # Creating a new sale
+            examination_instance = data.get("examination")
+            
+            if not examination_instance:
+                raise serializers.ValidationError({"examination": "This field is required when creating a sale."})
+            
+            # Check if the examination already has a sale (paid or not)
+            if Sales.objects.filter(examination=examination_instance).exists():
+                raise serializers.ValidationError({"examination": "A sale for this examination already exists."})
+
         return data
 
     def create(self, validated_data):
@@ -58,7 +75,6 @@ class SalesSerializer(serializers.ModelSerializer):
         # Prevent update if balance is already zero
         if instance.balance_due == 0:
             raise serializers.ValidationError({"error": "Sale is already fully paid. No further payments allowed."})
-        
 
         amount_paid = validated_data.get("advance_paid", 0)
         
@@ -66,7 +82,6 @@ class SalesSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "error": f"Payment exceeds the remaining balance due. Please pay the exact balance amount {instance.balance_due} or less."
             })
-
 
         if amount_paid > 0:
             instance.advance_paid += amount_paid  # Increment previous value
@@ -88,4 +103,3 @@ class SalesSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-

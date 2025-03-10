@@ -149,7 +149,7 @@ class SalesView(APIView):
         """ Create a new sale """
         
         request_data = request.data.copy()
-        request_data['booked_by'] = f"{request.user.first_name} {request.user.last_name}"
+        request_data['served_by'] = f"Dr. {request.user.first_name} {request.user.last_name}"
 
         serializer = SalesSerializer(data=request_data)
         if serializer.is_valid():
@@ -176,3 +176,25 @@ class SalesView(APIView):
                 }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class SearchClientBalanceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Search for a client by name or phone number to check if they have an outstanding balance."""
+        query = request.query_params.get("q", "").strip()  
+        
+        if not query:
+            return Response({"error": "Please provide a search query (name or phone number)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Search for clients with outstanding balance based on name or phone
+        sales = Sales.objects.filter(
+            Q(booked_by__icontains=query),
+            balance_due__gt=0  # Ensures only clients with unpaid balance are returned
+        )
+
+        if not sales.exists():
+            return Response({"message": "No client found with an outstanding balance."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = SalesSerializer(sales, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

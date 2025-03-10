@@ -113,6 +113,7 @@ class Sales(models.Model):
     fitting_instructions = models.TextField(blank=True)
     delivery_date = models.DateField(blank=True, null=True)
     booked_by = models.CharField(max_length=100, blank=False)
+    served_by = models.CharField(max_length=100, blank=False)
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHODS, default='Cash')
 
     # Payment Fields

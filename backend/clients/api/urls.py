@@ -1,5 +1,13 @@
 from django.urls import path
-from .views import RegisterClientView, RegisterClientExaminationView, RetrievAllExaminations, RetrieveClientExaminations,BookExistingCientForExamination, SearchClientView, SalesView
+from .views import(
+RegisterClientView,
+RegisterClientExaminationView,
+RetrievAllExaminations, 
+RetrieveClientExaminations,
+BookExistingCientForExamination, 
+SearchClientView, SalesView, 
+SearchClientBalanceView
+)
 
 app_name = "clients"
 
@@ -14,6 +22,8 @@ urlpatterns = [
     path('sales/create/', SalesView.as_view(), name='create-sales'),  
     path('sales/<uuid:sales_id>/', SalesView.as_view(), name='get-sales'), 
     path('sales/<uuid:sales_id>/update/', SalesView.as_view(), name='update-sales'), 
+    path('sales/search-client-balance/', SearchClientBalanceView.as_view(), name='search-client-balance'),
+
 ]
 
 
