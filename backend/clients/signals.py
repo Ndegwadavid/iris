@@ -1,9 +1,23 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Client, Examination, Sales
+import africastalking
+from decouple import config
+
+africastalking.initialize(
+    username='sandbox',
+    api_key=config('AFRICASTALKING_API_KEY', cast=str)
+
+)
+
+sms = africastalking.SMS
 
 def send_message(phone_number, message):
-    print(f"Sending message to {phone_number}: {message}")
+    try:
+        response = sms.send(message, [phone_number])
+    except Exception as e:
+        print(f"SMS sending failed")
+
     
 @receiver(post_save, sender=Client)
 def send_welcome_message(sender, instance, created, **kwargs):
@@ -27,10 +41,6 @@ def send_sales_confirmation(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Sales)
 def send_sales_update_notification(sender, instance, **kwargs):
-    """
-    Send a message to the client when the sales record is updated.
-    This notifies the client about their payment status.
-    """
     client = instance.examination.client
     phone_number = client.phone_number
     name = client.first_name
