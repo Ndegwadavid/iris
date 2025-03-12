@@ -61,10 +61,11 @@ export default function ReceptionPage() {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_URL, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify(data) //includeing the data collected to avoid errosd.
       })
 
       if (!response.ok) {
