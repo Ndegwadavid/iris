@@ -1,15 +1,20 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { BarChart, Eye, Users, Home, Clipboard, Search, Settings, ShoppingBag, Moon, Sun } from "lucide-react"
+import { BarChart, Eye, Users, Home, Clipboard, Search, Settings, ShoppingBag, Moon, Sun, LogOut } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useToast } from "@/components/ui/use-toast"
 
 export function Sidebar() {
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const SIGNOUT_URL = "http://127.0.0.1:8000/api/v001/auth/signout/"
 
   const navItems = [
-    { href: "/", icon: Home, label: "Dashboard" },
     { href: "/reception", icon: Clipboard, label: "Reception" },
     { href: "/examination", icon: Eye, label: "Examination" },
     { href: "/sales", icon: ShoppingBag, label: "Sales" },
@@ -17,6 +22,27 @@ export function Sidebar() {
     { href: "/existing-clients", icon: Search, label: "Existing Clients" },
     { href: "/admin", icon: BarChart, label: "Admin" },
   ]
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(SIGNOUT_URL, {
+        method: "POST",
+        credentials: "include",
+      })
+      if (response.ok) {
+        toast({ title: "Signed out successfully" })
+        router.push("/")
+      } else {
+        throw new Error("Logout failed")
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: error instanceof Error ? error.message : "Something went wrong",
+      })
+    }
+  }
 
   return (
     <div className="w-64 border-r bg-background h-screen flex flex-col overflow-y-auto">
@@ -58,9 +84,13 @@ export function Sidebar() {
             </>
           )}
         </Button>
-        <Button variant="outline" className="w-full justify-start hover:bg-muted transition-colors duration-200">
-          <Settings className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-200" />
-          Settings
+        <Button
+          variant="outline"
+          className="w-full justify-start hover:bg-muted transition-colors duration-200"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
         </Button>
       </div>
     </div>
