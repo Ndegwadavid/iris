@@ -1,56 +1,148 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Search, Eye, CheckCircle, Clock } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { Toaster } from "@/components/ui/toaster";
-
-// Dummy data for examinations
-const pendingExaminations = [
-  { id: 1, name: "John Doe", time: "10:30 AM", doctor: "Dr. Smith" },
-  { id: 2, name: "Jane Smith", time: "11:15 AM", doctor: "Dr. Johnson" },
-  { id: 3, name: "Michael Brown", time: "1:45 PM", doctor: "Dr. Williams" },
-];
-
-const completedExaminations = [
-  { id: 4, name: "Sarah Wilson", time: "9:00 AM", doctor: "Dr. Smith" },
-  { id: 5, name: "Robert Davis", time: "9:45 AM", doctor: "Dr. Johnson" },
-];
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { Search, Eye, CheckCircle, Clock } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function ExaminationPage() {
-  const [activeTab, setActiveTab] = useState("pending");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedClient, setSelectedClient] = useState<any>(null);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("pending")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedClient, setSelectedClient] = useState<any>(null)
+  const [pendingExams, setPendingExams] = useState<any[]>([])
+  const [completedExams, setCompletedExams] = useState<any[]>([])
+  const [formData, setFormData] = useState({
+    right_sph: "",
+    right_cyl: "",
+    right_axis: "",
+    right_add: "",
+    right_va: "N/A",
+    right_ipd: "",
+    left_sph: "",
+    left_cyl: "",
+    left_axis: "",
+    left_add: "",
+    left_va: "N/A",
+    left_ipd: "",
+    clinical_history: "",
+  })
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const PENDING_EXAMS_URL = "http://127.0.0.1:8000/api/v001/clients/examinations/pending/"
+  const EXAMINE_URL = "http://127.0.0.1:8000/api/v001/clients/examination/"
+
+  useEffect(() => {
+    fetchPendingExaminations()
+  }, [])
+
+  const fetchPendingExaminations = async () => {
+    try {
+      const response = await fetch(PENDING_EXAMS_URL, {
+        method: "GET",
+        credentials: "include",  // Include cookies for authentication
+      })
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized - Please log in")
+        }
+        const errorText = await response.text()
+        throw new Error(`Failed to fetch pending examinations: ${response.status} - ${errorText}`)
+      }
+      const data = await response.json()
+      setPendingExams(data.data || [])
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
+      })
+      if (error instanceof Error && error.message.includes("Unauthorized")) {
+        router.push("/")  // Redirect to login on 401
+      }
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({ ...prev, [id]: value }))
+  }
+
+  const handleSaveRecord = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedClient) return
+
+    try {
+      const response = await fetch(`${EXAMINE_URL}${selectedClient.id}/register/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",  // Include cookies for authentication
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized - Please log in")
+        }
+        const errorText = await response.text()
+        throw new Error(`Failed to save examination: ${response.status} - ${errorText}`)
+      }
+      const result = await response.json()
+
+      const completedExam = { ...selectedClient, ...formData, state: "Completed" }
+      setPendingExams(pendingExams.filter((exam) => exam.id !== selectedClient.id))
+      setCompletedExams([completedExam, ...completedExams])
+      setSelectedClient(null)
+      setActiveTab("completed")
+      setFormData({
+        right_sph: "",
+        right_cyl: "",
+        right_axis: "",
+        right_add: "",
+        right_va: "N/A",
+        right_ipd: "",
+        left_sph: "",
+        left_cyl: "",
+        left_axis: "",
+        left_add: "",
+        left_va: "N/A",
+        left_ipd: "",
+        clinical_history: "",
+      })
+      toast({
+        title: "Examination Record Saved",
+        description: `Prescription for ${selectedClient.client_name} saved successfully`,
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
+      })
+      if (error instanceof Error && error.message.includes("Unauthorized")) {
+        router.push("/")  // Redirect to login on 401
+      }
+    }
+  }
+
+  const startExamination = (exam: any) => {
+    setSelectedClient(exam)
+  }
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     toast({
-      title: "Search results",
-      description: `Found 3 clients matching "${searchQuery}"`,
-    });
-  };
-
-  const handleSaveRecord = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Examination record saved",
-      description: "The prescription has been saved successfully",
-    });
-    setSelectedClient(null);
-    setActiveTab("completed");
-  };
-
-  const startExamination = (client: any) => {
-    setSelectedClient(client);
-  };
+      title: "Search",
+      description: `Searching for "${searchQuery}" (not implemented yet)`,
+    })
+  }
 
   return (
     <div className="space-y-6">
@@ -97,12 +189,12 @@ export default function ExaminationPage() {
                 </div>
                 <TabsContent value="pending" className="pt-2">
                   <div className="space-y-2 px-4 pb-4">
-                    {pendingExaminations.map((exam) => (
+                    {pendingExams.map((exam) => (
                       <div key={exam.id} className="flex items-center justify-between p-2 rounded-md border">
                         <div>
-                          <p className="font-medium">{exam.name}</p>
+                          <p className="font-medium">{exam.client_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {exam.time} - {exam.doctor}
+                            {new Date(exam.created_at).toLocaleTimeString()} - {exam.examined_by || "Unassigned"}
                           </p>
                         </div>
                         <Button size="sm" onClick={() => startExamination(exam)}>
@@ -114,12 +206,12 @@ export default function ExaminationPage() {
                 </TabsContent>
                 <TabsContent value="completed" className="pt-2">
                   <div className="space-y-2 px-4 pb-4">
-                    {completedExaminations.map((exam) => (
+                    {completedExams.map((exam) => (
                       <div key={exam.id} className="flex items-center justify-between p-2 rounded-md border">
                         <div>
-                          <p className="font-medium">{exam.name}</p>
+                          <p className="font-medium">{exam.client_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {exam.time} - {exam.doctor}
+                            {new Date(exam.updated_at || exam.created_at).toLocaleTimeString()} - {exam.examined_by}
                           </p>
                         </div>
                         <Button size="sm" variant="outline">
@@ -140,9 +232,9 @@ export default function ExaminationPage() {
               <CardHeader className="bg-primary/5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Prescription for {selectedClient.name}</CardTitle>
+                    <CardTitle>Prescription for {selectedClient.client_name}</CardTitle>
                     <CardDescription>
-                      {selectedClient.time} - {selectedClient.doctor}
+                      {new Date(selectedClient.created_at).toLocaleTimeString()} - {selectedClient.examined_by || "Unassigned"}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-1 text-sm text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
@@ -161,28 +253,28 @@ export default function ExaminationPage() {
                           <div className="text-center font-medium text-primary">Right Eye (R)</div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                              <Label htmlFor="r-sph">SPH</Label>
-                              <Input id="r-sph" placeholder="-2.00" />
+                              <Label htmlFor="right_sph">SPH</Label>
+                              <Input id="right_sph" placeholder="-2.00" value={formData.right_sph} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="r-cyl">CYL</Label>
-                              <Input id="r-cyl" placeholder="-0.50" />
+                              <Label htmlFor="right_cyl">CYL</Label>
+                              <Input id="right_cyl" placeholder="-0.50" value={formData.right_cyl} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="r-axis">AXIS</Label>
-                              <Input id="r-axis" placeholder="180" />
+                              <Label htmlFor="right_axis">AXIS</Label>
+                              <Input id="right_axis" placeholder="180" value={formData.right_axis} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="r-add">ADD</Label>
-                              <Input id="r-add" placeholder="+2.00" />
+                              <Label htmlFor="right_add">ADD</Label>
+                              <Input id="right_add" placeholder="+2.00" value={formData.right_add} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="r-va">V/A</Label>
-                              <Input id="r-va" placeholder="6/6" />
+                              <Label htmlFor="right_va">V/A</Label>
+                              <Input id="right_va" placeholder="6/6" value={formData.right_va} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="r-ipd">IPD</Label>
-                              <Input id="r-ipd" placeholder="31" />
+                              <Label htmlFor="right_ipd">IPD</Label>
+                              <Input id="right_ipd" placeholder="31" value={formData.right_ipd} onChange={handleInputChange} />
                             </div>
                           </div>
                         </div>
@@ -190,28 +282,28 @@ export default function ExaminationPage() {
                           <div className="text-center font-medium text-primary">Left Eye (L)</div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                              <Label htmlFor="l-sph">SPH</Label>
-                              <Input id="l-sph" placeholder="-2.25" />
+                              <Label htmlFor="left_sph">SPH</Label>
+                              <Input id="left_sph" placeholder="-2.25" value={formData.left_sph} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="l-cyl">CYL</Label>
-                              <Input id="l-cyl" placeholder="-0.75" />
+                              <Label htmlFor="left_cyl">CYL</Label>
+                              <Input id="left_cyl" placeholder="-0.75" value={formData.left_cyl} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="l-axis">AXIS</Label>
-                              <Input id="l-axis" placeholder="175" />
+                              <Label htmlFor="left_axis">AXIS</Label>
+                              <Input id="left_axis" placeholder="175" value={formData.left_axis} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="l-add">ADD</Label>
-                              <Input id="l-add" placeholder="+2.00" />
+                              <Label htmlFor="left_add">ADD</Label>
+                              <Input id="left_add" placeholder="+2.00" value={formData.left_add} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="l-va">V/A</Label>
-                              <Input id="l-va" placeholder="6/6" />
+                              <Label htmlFor="left_va">V/A</Label>
+                              <Input id="left_va" placeholder="6/6" value={formData.left_va} onChange={handleInputChange} />
                             </div>
                             <div className="grid gap-2">
-                              <Label htmlFor="l-ipd">IPD</Label>
-                              <Input id="l-ipd" placeholder="31" />
+                              <Label htmlFor="left_ipd">IPD</Label>
+                              <Input id="left_ipd" placeholder="31" value={formData.left_ipd} onChange={handleInputChange} />
                             </div>
                           </div>
                         </div>
@@ -219,17 +311,14 @@ export default function ExaminationPage() {
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="clinical-history">Clinical History</Label>
+                      <Label htmlFor="clinical_history">Clinical History</Label>
                       <Textarea
-                        id="clinical-history"
+                        id="clinical_history"
                         placeholder="Enter any relevant clinical history or notes"
                         rows={4}
+                        value={formData.clinical_history}
+                        onChange={handleInputChange}
                       />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="examined-by">Examined By</Label>
-                      <Input id="examined-by" placeholder="Dr. Name" />
                     </div>
                   </div>
                 </CardContent>
@@ -259,5 +348,5 @@ export default function ExaminationPage() {
       </div>
       <Toaster />
     </div>
-  );
+  )
 }
