@@ -9,6 +9,7 @@ from datetime import date
 from django.db.models import Q
 
 
+
 class RegisterClientView(APIView):
     permission_classes = [IsAuthenticated]
     
