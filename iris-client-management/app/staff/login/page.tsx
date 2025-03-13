@@ -3,32 +3,29 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, Lock } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 
-export default function Home() {
-  const [email, setEmail] = useState("")
+export default function StaffLoginPage() {
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
-
-  const LOGIN_URL = "http://127.0.0.1:8000/api/v001/auth/staff/login/"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch(LOGIN_URL, {
+      const response = await fetch("http://127.0.0.1:8000/api/v001/auth/staff/login/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // Send and receive cookies
-        body: JSON.stringify({ email, password }), // Use email instead of username
+        credentials: "include", // Send cookies with the request
+        body: JSON.stringify({ username, password }),
       })
 
       if (!response.ok) {
@@ -36,11 +33,12 @@ export default function Home() {
         throw new Error(errorData.detail || "Login failed")
       }
 
+      // No need to store tokens; they're in cookies
       toast({
         title: "Login successful",
-        description: "Welcome to IRIS!",
+        description: "Welcome back!",
       })
-      router.push("/reception") // Redirect to reception after login
+      router.push("/reception")
     } catch (error) {
       toast({
         variant: "destructive",
@@ -56,22 +54,17 @@ export default function Home() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-            <Eye className="h-6 w-6 text-primary" />
-            IRIS Staff Login
-          </CardTitle>
-          <CardDescription>Sign in with your email and password</CardDescription>
+          <CardTitle>Staff Login</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
                 required
               />
             </div>
@@ -87,14 +80,7 @@ export default function Home() {
               />
             </div>
             <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? (
-                <>Logging in...</>
-              ) : (
-                <>
-                  <Lock className="mr-2 h-4 w-4" />
-                  Sign In
-                </>
-              )}
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
         </CardContent>
