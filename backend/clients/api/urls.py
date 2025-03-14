@@ -40,7 +40,7 @@ urlpatterns = [
     path("sales/generate-receipt/<uuid:sales_id>/", GenerateReceiptView.as_view(), name="generate-receipt"),
 
     # Search Endpoints
-    path('search-examinations-booked-for-sales/', GetBookedClientForSalesAPIView.as_view(), name='get-booked-client-for-sales'),
+    path('search-booked-for-sales/', GetBookedClientForSalesAPIView.as_view(), name='get-booked-client-for-sales'),
     path('search/', SearchClientView.as_view(), name='search_client'),
 ]
 
