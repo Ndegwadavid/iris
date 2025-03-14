@@ -9,8 +9,6 @@ from datetime import date
 from django.db.models import Q
 
 
-
-
 class BranchListAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
