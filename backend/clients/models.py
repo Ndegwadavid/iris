@@ -24,6 +24,7 @@ class Client(models.Model):
     phone_number = models.CharField(max_length=20, blank=False)
     email = models.EmailField(blank=False)
     location = models.CharField(max_length=100, blank=False)
+    branch =  models.CharField(max_length=100, blank=False )
     registered_by = models.CharField(max_length=100, blank=False)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=False)
     previous_prescription = models.TextField(blank=True)

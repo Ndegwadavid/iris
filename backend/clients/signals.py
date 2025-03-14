@@ -76,7 +76,7 @@ def generate_client_reg_no(sender, instance, **kwargs):
 
     if not instance.reg_no:  # Ensure it's not already assigned
         # Extract branch name from "City, Area"
-        branch = instance.location
+        branch = instance.branch.strip() 
 
         # Fetch the branch code from the database
         branch = Branch.objects.filter(name__iexact=branch).first()
