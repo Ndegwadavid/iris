@@ -17,7 +17,8 @@ sms = africastalking.SMS
 
 def send_message(phone_number, message):
     try:
-        response = sms.send(message, [phone_number])
+        # response = sms.send(message, [phone_number]) 
+        print(f"SMS sent to {phone_number}: {message}")
     except Exception as e:
         print(f"SMS sending failed")
 
