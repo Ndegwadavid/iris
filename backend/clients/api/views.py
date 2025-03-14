@@ -95,6 +95,7 @@ class BookExistingCientForExamination(APIView):
         return Response(
             {
                 "message": "Client booked for examination",
+
             },
             status=status.HTTP_201_CREATED
         )
@@ -195,7 +196,8 @@ class SearchClientBalanceView(APIView):
         if not query:
             return Response({"error": "Please provide a search query (name or phone number)."}, status=status.HTTP_400_BAD_REQUEST)
         sales = Sales.objects.filter(
-            Q(booked_by__icontains=query),
+            Q(examination__client__first_name__icontains=query)|
+            Q(examination__client__reg_no__icontains=query),
             balance_due__gt=0
         )
         if not sales.exists():
