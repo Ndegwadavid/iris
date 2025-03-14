@@ -194,16 +194,33 @@ class SearchClientBalanceView(APIView):
     def get(self, request):
         query = request.query_params.get("q", "").strip()  
         if not query:
-            return Response({"error": "Please provide a search query (name or phone number)."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Please provide a search query (name or registration number)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         sales = Sales.objects.filter(
-            Q(examination__client__first_name__icontains=query)|
-            Q(examination__client__reg_no__icontains=query),
-            balance_due__gt=0
+            Q(examination__client__first_name__icontains=query) |
+            Q(examination__client__reg_no__icontains=query)
         )
+
         if not sales.exists():
-            return Response({"message": "No client found with an outstanding balance."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = SalesSerializer(sales, many=True)
+            return Response(
+                {"message": "Client not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        outstanding_sales = sales.filter(balance_due__gt=0)
+
+        if not outstanding_sales.exists():
+            return Response(
+                {"message": "Client found, but balance is fully paid."},
+                status=status.HTTP_200_OK
+            )
+
+        serializer = SalesSerializer(outstanding_sales, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class PendingExaminationsView(APIView):
