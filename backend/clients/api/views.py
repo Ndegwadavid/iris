@@ -9,8 +9,6 @@ from datetime import date
 from django.db.models import Q
 
 
-
-
 class BranchListAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -231,11 +229,57 @@ class PendingExaminationsView(APIView):
         serializer = ExaminationSerializer(examinations, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
     
-#### dont fight me :-) hhahahaha for this endpoitn 
-class CompletedExaminationsView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        examinations = Examination.objects.filter(state="Completed")
-        serializer = ExaminationSerializer(examinations, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
+class GenerateReceiptView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, sales_id):
+        sale = get_object_or_404(Sales, id=sales_id)
+        examination = sale.examination
+        client = examination.client
+        
+        receipt = {
+            "client": {
+                "name": f"{client.first_name} {client.last_name}",
+                "registration_number": client.reg_no,
+                "phone_number": client.phone_number,
+                "email": client.email,
+                "visit_count": client.visit_count,
+                "last_examination_date": client.last_examination_date,
+            },
+            "examination": {
+                "date": examination.examination_date,
+                "status": examination.state,
+                "examined_by": examination.examined_by,
+            },
+            "sales": {
+                "payment_method": sale.payment_method,
+                "served_by": sale.served_by,
+                "total_amount": sale.total_price,
+                "amount_paid": sale.advance_paid,
+                "balance_due": sale.balance_due,
+                "advance_payment_status": sale.advance_payment_status,
+                "balance_payment_status": sale.balance_payment_status,
+                "order_status": sale.order_paid,
+                "mpesa_transaction_code": sale.mpesa_transaction_code,
+                "created_at": sale.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                "frame": {
+                    "brand": sale.frame_brand,
+                    "model": sale.frame_model,
+                    "color": sale.frame_color,
+                    "quantity": sale.frame_quantity,
+                    "price": sale.frame_price,
+                },
+                "lens": {
+                    "brand": sale.lens_brand,
+                    "type": sale.lens_type,
+                    "material": sale.lens_material,
+                    "coating": sale.lens_coating,
+                    "quantity": sale.lens_quantity,
+                    "price": sale.lens_price,
+                },
+            }
+        }
+        
+        return Response(receipt, status=status.HTTP_200_OK)
