@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from ..models import Client, Examination, Sales
+from ..models import Client, Examination, Sales, Branch
+
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ['id', 'name', 'code']
 
 class ExaminationSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
@@ -16,6 +21,7 @@ class ExaminationSerializer(serializers.ModelSerializer):
             "right_sph", "right_cyl", "right_axis", "right_add", "right_va", "right_ipd",
             "left_sph", "left_cyl", "left_axis", "left_add", "left_va", "left_ipd",
             "state",
+            'booked_for_sales',
             "created_at",
             "updated_at",
         ] 

@@ -3,10 +3,21 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from ..models import Client, Examination, Sales
-from .serializers import ClientRegistrationSerializer, ExaminationSerializer, SalesSerializer
+from ..models import Client, Examination, Sales, Branch
+from .serializers import ClientRegistrationSerializer, ExaminationSerializer, SalesSerializer, BranchSerializer
 from datetime import date
 from django.db.models import Q
+
+
+
+
+class BranchListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        branches = Branch.objects.all()
+        serializer = BranchSerializer(branches, many=True)
+        return Response(serializer.data)
 
 
 
@@ -47,6 +58,7 @@ class RegisterClientExaminationView(APIView):
             return Response(
                 {
                     "message": "Examination added successfully",
+                    "booked_for_sales" : 'true'
                 },
                 status=status.HTTP_200_OK
             )
@@ -82,10 +94,30 @@ class BookExistingCientForExamination(APIView):
         client.save()
         return Response(
             {
-                "message": "Client booked for examination"
+                "message": "Client booked for examination",
             },
             status=status.HTTP_201_CREATED
         )
+
+
+class GetBookedClientForSalesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        search_query = request.query_params.get("search", "").strip()
+
+        if search_query:
+            booked_clients = Examination.objects.filter(
+                booked_for_sales=True
+            ).filter(
+                Q(client__first_name__icontains=search_query) |  
+                Q(client__reg_no__icontains=search_query)  
+            )
+        else:
+            booked_clients = Examination.objects.filter(booked_for_sales=True)
+
+        serializer = ExaminationSerializer(booked_clients, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SearchClientView(APIView):

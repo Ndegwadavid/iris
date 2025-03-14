@@ -1,6 +1,14 @@
 from django.db import models
 import uuid
 
+
+class Branch(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=5, unique=True)  
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
 class Client(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
@@ -23,6 +31,7 @@ class Client(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     last_examination_date = models.DateField(blank=True, null=True)
     visit_count = models.PositiveIntegerField(default=1)
+    reg_no = models.CharField(max_length=20, unique=True, blank=True)
     
     class Meta:
         ordering = ['-created_at']
@@ -63,6 +72,7 @@ class Examination(models.Model):
 
 
     state = models.CharField(max_length=10, choices=EXAMINATION_STATE, default='Pending')
+    booked_for_sales = models.BooleanField(default=False) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -140,6 +150,11 @@ class Sales(models.Model):
         """ Auto-calculate total price, balance due, and update payment status before saving. """
         self.total_price = (self.frame_price * self.frame_quantity) + (self.lens_price * self.lens_quantity)
         self.balance_due = self.total_price - self.advance_paid
+        
+        """Once a sale is made, mark the examination as no longer booked for sales"""
+        if self.examination.booked_for_sales:
+            self.examination.booked_for_sales = False
+            self.examination.save()
 
         # Update payment status dynamically
         if self.balance_due > 0 and self.advance_paid > 0:
