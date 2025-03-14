@@ -230,3 +230,12 @@ class PendingExaminationsView(APIView):
         examinations = Examination.objects.filter(state="Pending")
         serializer = ExaminationSerializer(examinations, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+    
+#### dont fight me :-) hhahahaha for this endpoitn 
+class CompletedExaminationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        examinations = Examination.objects.filter(state="Completed")
+        serializer = ExaminationSerializer(examinations, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
