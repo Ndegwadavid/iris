@@ -1,8 +1,11 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import Client, Examination, Sales
+from .models import Client, Examination, Sales, Branch
 import africastalking
 from decouple import config
+from datetime import datetime
+import uuid
+
 
 africastalking.initialize(
     username='sandbox',
@@ -32,6 +35,13 @@ def send_examination_booking_message(sender, instance, created, **kwargs):
         message = f"Hello {instance.client.first_name}, your examination is booked for {instance.examination_date}."
         send_message(instance.client.phone_number, message)
         
+@receiver(post_save, sender=Examination)
+def mark_examination_as_booked_for_sale(sender, instance, **kwargs):
+    if instance.state == "Completed" and not instance.booked_for_sales:
+        instance.booked_for_sales = True
+        instance.save()
+
+        
 @receiver(post_save, sender=Sales)
 def send_sales_confirmation(sender, instance, created, **kwargs):
     if created:
@@ -53,3 +63,31 @@ def send_sales_update_notification(sender, instance, **kwargs):
               
 
     send_message(phone_number, message)
+
+
+@receiver(pre_save, sender=Client)
+def generate_client_reg_no(sender, instance, **kwargs):
+    """
+    Generates a unique reg_no in the format:
+    [Branch]/[Year]/[Month]/[First 6 chars of UUID]
+    Example: M/2025/03/A1B2C3
+    """
+
+    if not instance.reg_no:  # Ensure it's not already assigned
+        # Extract branch name from "City, Area"
+        branch = instance.location
+
+        # Fetch the branch code from the database
+        branch = Branch.objects.filter(name__iexact=branch).first()
+        branch_code = branch.code if branch else "XX"  
+        
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+
+        #  Use the first 6 characters of UUID
+        unique_id = str(uuid.uuid4())[:6].upper()
+
+        # Format the registration number
+        new_reg_no = f"{branch_code}/{current_year}/{current_month:02d}/{unique_id}"
+
+        instance.reg_no = new_reg_no  # Assign the unique reg_no

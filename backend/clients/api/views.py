@@ -3,10 +3,22 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from ..models import Client, Examination, Sales
-from .serializers import ClientRegistrationSerializer, ExaminationSerializer, SalesSerializer
+from ..models import Client, Examination, Sales, Branch
+from .serializers import ClientRegistrationSerializer, ExaminationSerializer, SalesSerializer, BranchSerializer
 from datetime import date
 from django.db.models import Q
+
+
+
+
+class BranchListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        branches = Branch.objects.all()
+        serializer = BranchSerializer(branches, many=True)
+        return Response(serializer.data)
+
 
 
 class RegisterClientView(APIView):
@@ -46,6 +58,7 @@ class RegisterClientExaminationView(APIView):
             return Response(
                 {
                     "message": "Examination added successfully",
+                    "booked_for_sales" : 'true'
                 },
                 status=status.HTTP_200_OK
             )
@@ -81,10 +94,31 @@ class BookExistingCientForExamination(APIView):
         client.save()
         return Response(
             {
-                "message": "Client booked for examination"
+                "message": "Client booked for examination",
+
             },
             status=status.HTTP_201_CREATED
         )
+
+
+class GetBookedClientForSalesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        search_query = request.query_params.get("search", "").strip()
+
+        if search_query:
+            booked_clients = Examination.objects.filter(
+                booked_for_sales=True
+            ).filter(
+                Q(client__first_name__icontains=search_query) |  
+                Q(client__reg_no__icontains=search_query)  
+            )
+        else:
+            booked_clients = Examination.objects.filter(booked_for_sales=True)
+
+        serializer = ExaminationSerializer(booked_clients, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SearchClientView(APIView):
@@ -160,15 +194,33 @@ class SearchClientBalanceView(APIView):
     def get(self, request):
         query = request.query_params.get("q", "").strip()  
         if not query:
-            return Response({"error": "Please provide a search query (name or phone number)."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Please provide a search query (name or registration number)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         sales = Sales.objects.filter(
-            Q(booked_by__icontains=query),
-            balance_due__gt=0
+            Q(examination__client__first_name__icontains=query) |
+            Q(examination__client__reg_no__icontains=query)
         )
+
         if not sales.exists():
-            return Response({"message": "No client found with an outstanding balance."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = SalesSerializer(sales, many=True)
+            return Response(
+                {"message": "Client not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        outstanding_sales = sales.filter(balance_due__gt=0)
+
+        if not outstanding_sales.exists():
+            return Response(
+                {"message": "Client found, but balance is fully paid."},
+                status=status.HTTP_200_OK
+            )
+
+        serializer = SalesSerializer(outstanding_sales, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class PendingExaminationsView(APIView):
