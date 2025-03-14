@@ -17,7 +17,7 @@ export default function Home() {
   const { toast } = useToast()
   const router = useRouter()
 
-  const LOGIN_URL = "http://127.0.0.1:8000/api/v001/auth/staff/login/"
+  const LOGIN_URL = "http://127.0.0.1:8000/api/v001/auth/jwt/create/"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

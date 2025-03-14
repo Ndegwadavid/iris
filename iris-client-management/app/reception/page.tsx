@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,27 +9,65 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-import { CalendarIcon, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react"
+import { CalendarIcon, CheckCircle, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { motion } from "framer-motion"
 
 export default function ReceptionPage() {
   const [date, setDate] = useState<Date | undefined>()
   const [lastExamDate, setLastExamDate] = useState<Date | undefined>()
   const [phone, setPhone] = useState("+254")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [successData, setSuccessData] = useState<{ reg_no: string; id: string } | null>(null)
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear())
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth())
-  const { toast } = useToast()
+  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([])
+  const [selectedBranch, setSelectedBranch] = useState<string>("")
+  const [selectedBranchDetails, setSelectedBranchDetails] = useState<{ name: string; code: string } | null>(null)
   const router = useRouter()
 
   const API_URL = "http://127.0.0.1:8000/api/v001/clients/register/"
+  const BRANCHES_API_URL = "http://127.0.0.1:8000/api/v001/clients/branches/"
 
   const years = Array.from({ length: new Date().getFullYear() - 1899 }, (_, i) => new Date().getFullYear() - i)
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+  // Fetch branches on component mount
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const response = await fetch(BRANCHES_API_URL, {
+          method: "GET",
+          credentials: "include",
+        })
+        if (!response.ok) throw new Error("Failed to fetch branches")
+        const data = await response.json()
+        setBranches(data)
+        console.log("Fetched branches:", data)
+      } catch (error) {
+        console.error("Error fetching branches:", error)
+      }
+    }
+    fetchBranches()
+  }, [])
+
+  // Update selected branch details whenever selectedBranch or branches changes
+  useEffect(() => {
+    if (selectedBranch && branches.length > 0) {
+      const branchDetails = branches.find(b => b.id === selectedBranch)
+      if (branchDetails) {
+        setSelectedBranchDetails({
+          name: branchDetails.name,
+          code: branchDetails.code
+        })
+      } else {
+        setSelectedBranchDetails(null)
+      }
+    } else {
+      setSelectedBranchDetails(null)
+    }
+  }, [selectedBranch, branches])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -46,26 +84,25 @@ export default function ReceptionPage() {
       location: formData.get("residence") as string,
       registered_by: formData.get("servedBy") as string,
       gender: formData.get("gender") as string,
-      previous_prescription: formData.get("previousRx") as string || "",
+      previous_prescription: (formData.get("previousRx") as string) || "",
       last_examination_date: lastExamDate ? format(lastExamDate, "yyyy-MM-dd") : null,
+      branch: selectedBranch,
     }
 
-    if (!data.dob || !data.gender) {
+    if (!data.dob || !data.gender || !data.branch) {
       setIsSubmitting(false)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Date of Birth and Gender are required.",
-      })
+      alert("Date of Birth, Gender, and Branch are required.")
       return
     }
 
+    console.log("Submitting data:", data) // Debug: Check payload before sending
+
     try {
-      const response = await fetch(API_URL, { 
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(data) //includeing the data collected to avoid errosd.
+        body: JSON.stringify(data),
       })
 
       if (!response.ok) {
@@ -75,24 +112,16 @@ export default function ReceptionPage() {
 
       const result = await response.json()
       setIsSubmitting(false)
-      setIsSuccess(true)
-      toast({
-        title: "Client registered successfully",
-        description: `Client ID: ${result.id || "N/A"}`, // Fallback to "N/A" if id is missing
-      })
-
+      setSuccessData({ reg_no: result.reg_no || "N/A", id: result.id || "N/A" })
       form.reset()
       setDate(undefined)
       setLastExamDate(undefined)
       setPhone("+254")
-      setTimeout(() => setIsSuccess(false), 3000)
+      setSelectedBranch("")
+      setSelectedBranchDetails(null)
     } catch (error) {
       setIsSubmitting(false)
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
-      })
+      alert(error instanceof Error ? error.message : "Something went wrong")
     }
   }
 
@@ -128,8 +157,46 @@ export default function ReceptionPage() {
     setCalendarYear(newYear)
   }
 
+  const handleProceedToExamination = () => {
+    if (successData?.id) {
+      router.push(`/examination/${successData.id}`)
+    }
+  }
+
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-4xl mx-auto py-8 relative">
+      {/* Toast Notification */}
+      {successData && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="fixed top-4 right-4 z-50 bg-green-500 text-white rounded-lg shadow-lg p-3 flex items-center gap-3 max-w-md"
+        >
+          <CheckCircle className="h-5 w-5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Client Registered!</p>
+            <p className="text-xs">Reg No: {successData.reg_no} | ID: {successData.id}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-green-600 p-1"
+            onClick={handleProceedToExamination}
+          >
+            Proceed
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-green-600 p-1"
+            onClick={() => setSuccessData(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Client Registration</h1>
         <p className="text-muted-foreground">Register new clients at the reception desk</p>
@@ -254,7 +321,7 @@ export default function ReceptionPage() {
                 <div className="min-h-5 text-xs text-destructive" aria-live="polite">
                   {date === undefined && <span>Please select a date of birth</span>}
                 </div>
-              </div>
+                </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input id="phone" name="phone" value={phone} onChange={handlePhoneChange} placeholder="+2547..." required maxLength={13} className="font-mono" />
@@ -271,6 +338,56 @@ export default function ReceptionPage() {
                 <Label htmlFor="servedBy">Served By</Label>
                 <Input id="servedBy" name="servedBy" placeholder="Staff name" required />
               </div>
+              {/* Fixed Branch Dropdown */}
+              <div className="grid gap-2">
+                <Label htmlFor="branch" className="flex items-center">
+                  <span>Branch</span>
+                  <span className="text-sm text-muted-foreground ml-1">(required)</span>
+                </Label>
+                <Select
+                  value={selectedBranch}
+                  onValueChange={(value) => {
+                    setSelectedBranch(value);
+                    const selected = branches.find(b => b.id === value);
+                    if (selected) {
+                      setSelectedBranchDetails({
+                        name: selected.name,
+                        code: selected.code
+                      });
+                    }
+                  }}
+                  name="branch"
+                  required
+                >
+                  <SelectTrigger id="branch" className={cn("w-full border-2", !selectedBranch && "text-muted-foreground")}>
+                    <SelectValue>
+                      {selectedBranchDetails ? 
+                        `${selectedBranchDetails.name} (${selectedBranchDetails.code})` : 
+                        "Select a branch"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branches.length === 0 ? (
+                      <div className="text-sm text-muted-foreground p-2">No branches available</div>
+                    ) : (
+                      branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name} ({branch.code})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <div className="min-h-5 text-xs" aria-live="polite">
+                  {selectedBranch ? (
+                    <span className="text-muted-foreground">
+                      Selected branch: {selectedBranchDetails?.name} ({selectedBranchDetails?.code})
+                    </span>
+                  ) : (
+                    <span className="text-destructive">Please select a branch</span>
+                  )}
+                </div>
+              </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="previousRx">Previous Rx (if any)</Label>
                 <Textarea id="previousRx" name="previousRx" placeholder="Enter previous prescription details if available" rows={4} />
@@ -278,7 +395,7 @@ export default function ReceptionPage() {
               <div className="grid gap-2">
                 <Label htmlFor="gender">Gender</Label>
                 <Select name="gender" required>
-                  <SelectTrigger id="gender" className="w-full">
+                  <SelectTrigger id="gender" className="w-full border-2">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -288,7 +405,7 @@ export default function ReceptionPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid birthgap-2">
+              <div className="grid gap-2">
                 <Label htmlFor="lastExamDate">Last Examination Date (if any)</Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -389,11 +506,13 @@ export default function ReceptionPage() {
             </div>
           </CardContent>
           <CardFooter className="flex justify-between border-t bg-muted/20 px-6 py-4">
-            <Button variant="outline" type="button" onClick={() => window.location.reload()}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || isSuccess} className="min-w-[150px]">
+            <Button variant="outline" type="button" onClick={() => window.location.reload()}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting || !!successData} className="min-w-[150px]">
               {isSubmitting ? (
                 <>Processing...</>
-              ) : isSuccess ? (
+              ) : successData ? (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Registered
@@ -405,7 +524,6 @@ export default function ReceptionPage() {
           </CardFooter>
         </form>
       </Card>
-      <Toaster />
     </div>
   )
 }
