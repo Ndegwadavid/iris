@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
 export const useFetch = (
-  action: (id?: string) => Promise<any>,
-  id?: string
+  action: (param: string) => Promise<any>,
+  param : string = ''
 ) => {
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -14,7 +14,7 @@ export const useFetch = (
       setError(null);
 
       try {
-        const response = await action(id);
+        const response = await action(param);
         setData(response);
       } catch (err: any) {
         console.error("Fetch Error:", err);
@@ -25,7 +25,7 @@ export const useFetch = (
     };
 
     fetchData();
-  }, [action, id]);
+  }, [action, param]);
 
   return { data, loading, error };
 };

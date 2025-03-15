@@ -8,12 +8,16 @@ class BranchSerializer(serializers.ModelSerializer):
 
 class ExaminationSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
+    client_reg_no = serializers.CharField(source='client.reg_no', read_only=True)
+    registered_by = serializers.CharField(source='client.registered_by', read_only=True)
     
     class Meta:
         model = Examination
         fields = [
             "id",
             "client",
+            'client_reg_no',
+            'registered_by', 
             "client_name",
             "examination_date",
             "examined_by",
@@ -35,7 +39,7 @@ class ExaminationSerializer(serializers.ModelSerializer):
 class ClientRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['first_name', 'last_name', 'dob', 'phone_number', 'email', 'location','branch', 'registered_by', 'gender', 'previous_prescription', 'last_examination_date']
+        fields = ['id','reg_no','first_name', 'last_name', 'dob', 'phone_number', 'email', 'location','branch', 'registered_by', 'gender','visit_count', 'previous_prescription', 'last_examination_date']
         read_only_fields = ['id', 'created_at', 'updated_at']
         
         
