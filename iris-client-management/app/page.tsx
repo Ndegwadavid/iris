@@ -1,56 +1,65 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Eye, Lock } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Eye, Lock } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { useSearchParams } from "next/navigation";
+import { signInUser } from "@/actions";
 
 export default function Home() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
-  const router = useRouter()
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { toast } = useToast();
+  const redirectTo = useSearchParams().get("redirectTo") || "/reception";
+  const router = useRouter();
 
-  const LOGIN_URL = "http://127.0.0.1:8000/api/v001/auth/jwt/create/"
+  const loginAction = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    const formData = new FormData(e.currentTarget);
 
     try {
-      const response = await fetch(LOGIN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Send and receive cookies
-        body: JSON.stringify({ email, password }), // Use email instead of username
-      })
+      const result = await signInUser(formData);
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || "Login failed")
+      if (result?.status === 401) {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: result.message,
+        });
+        return;
       }
 
-      toast({
-        title: "Login successful",
-        description: "Welcome to IRIS!",
-      })
-      router.push("/reception") // Redirect to reception after login
-    } catch (error) {
+      if (result?.status === 200) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+        router.replace(redirectTo);
+      }
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Something went wrong",
-      })
+        description:
+          error instanceof Error ? error.message : "Something went wrong",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -60,17 +69,18 @@ export default function Home() {
             <Eye className="h-6 w-6 text-primary" />
             IRIS Staff Login
           </CardTitle>
-          <CardDescription>Sign in with your email and password</CardDescription>
+          <CardDescription>
+            Sign in with your email and password
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={loginAction} method="POST" className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
                 placeholder="Enter your email"
                 required
               />
@@ -80,8 +90,7 @@ export default function Home() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
                 placeholder="Enter your password"
                 required
               />
@@ -101,5 +110,5 @@ export default function Home() {
       </Card>
       <Toaster />
     </div>
-  )
+  );
 }

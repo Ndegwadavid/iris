@@ -28,7 +28,7 @@ export default function StaffLoginPage() {
         if (result?.status === 401) {
           toast({
             variant: "destructive",
-            title: "Login failed",
+            title: "Login failed3",
             description: result.message,
           });
           return;
@@ -46,7 +46,7 @@ export default function StaffLoginPage() {
           variant: "destructive",
           title: "Login failed",
           description:
-            error instanceof Error ? error.message : "Something went wrong",
+            error instanceof Error ? error.message : "Something went wrong3",
         });
       } finally {
         setIsLoading(false);

@@ -7,5 +7,5 @@ export const signOut = async () => {
   const cookiesStore = await cookies();
   cookiesStore.delete('access');
   cookiesStore.delete('refresh');
-  return redirect('/auth/signin');
+  return redirect('/');
 };
