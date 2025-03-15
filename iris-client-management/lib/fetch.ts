@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const BASE_URL = "http://127.0.0.1:8000/api/v001/";
+const BASE_URL = "http://127.0.0.1:8000/api/v001";
 
 export const api = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${BASE_URL}/${endpoint}`;
