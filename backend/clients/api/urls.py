@@ -41,7 +41,7 @@ urlpatterns = [
 
     # Search Endpoints
     path('search-booked-for-sales/', GetBookedClientForSalesAPIView.as_view(), name='get-booked-client-for-sales'),
-    path('search/', SearchClientView.as_view(), name='search_client'),
+    path('search-client/', SearchClientView.as_view(), name='search_client'),
 ]
 
 
