@@ -141,7 +141,7 @@ class SearchClientView(APIView):
                 {"message": "No clients found."}, 
                 status=status.HTTP_404_NOT_FOUND
             )
-        serializer = ClientRegistrationSerializer(clients, many=True)
+        serializer = ClientSerializer(clients, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

@@ -1,4 +1,3 @@
-// lib/clients.ts
 export type Client = {
   id: string;
   reg_no: string;
@@ -8,6 +7,11 @@ export type Client = {
   phone_number: string | null;
   email: string | null;
   last_examination_date: string | null;
+  visit_count?: number;
+  balance?: number;
+  payment_status?: "fully_paid" | "pending_balance" | "overdue";
+  latest_examination_id?: string;
+  examinations?: Examination[];
 };
 
 export type Examination = {
@@ -54,4 +58,38 @@ export async function fetchClientById(id: string): Promise<Client & { examinatio
     throw new Error(errorData.error || `Failed to fetch client (status: ${response.status})`);
   }
   return await response.json();
+}
+
+
+export async function updateClientBalance(
+  salesId: string,
+  amountPaid: number,
+  paymentMethod: "Mpesa" | "Cash",
+  mpesaCode?: string
+): Promise<void> {
+  const payload: { advance_paid: number; advance_payment_method?: string; mpesa_transaction_code?: string } = {
+    advance_paid: amountPaid,
+  };
+  if (paymentMethod === "Mpesa") {
+    if (!mpesaCode) throw new Error("M-Pesa code is required for M-Pesa payments");
+    payload.advance_payment_method = "Mpesa";
+    payload.mpesa_transaction_code = mpesaCode;
+  } else if (paymentMethod === "Cash") {
+    payload.advance_payment_method = "Cash";
+  }
+
+  const response = await fetch(`/api/v001/clients/sales/${salesId}/pay-balance/`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const errorData = await response.text();
+    console.error(`Error response: ${errorData}`);
+    throw new Error(`Failed to update balance (status: ${response.status}): ${errorData}`);
+  }
+  console.log(`Balance updated for sales ID ${salesId}`);
 }
