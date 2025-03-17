@@ -56,6 +56,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
   };
 
   const examFields = ["sph", "cyl", "axis", "add", "va", "ipd"];
+  const isCompleted = selectedClient?.state === "Completed";
 
   return (
     <Card>
@@ -85,8 +86,22 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
               ) : null}
             </CardDescription>
           </div>
-          <span className="text-sm text-amber-600 bg-amber-100 px-2 py-1 rounded-full flex items-center gap-1">
-            <Clock className="h-3 w-3" /> In Progress
+          <span
+            className={`text-sm px-2 py-1 rounded-full flex items-center gap-1 ${
+              isCompleted
+                ? "text-green-600 bg-green-100"
+                : "text-amber-600 bg-amber-100"
+            }`}
+          >
+            {isCompleted ? (
+              <>
+                <CheckCircle className="h-3 w-3" /> Completed
+              </>
+            ) : (
+              <>
+                <Clock className="h-3 w-3" /> Pending
+              </>
+            )}
           </span>
         </div>
       </CardHeader>
@@ -114,6 +129,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
                         placeholder="-"
                         value={formData[`${side}_${field}`] || ""}
                         onChange={handleInputChange}
+                        disabled={isCompleted}
                       />
                     </div>
                   ))}
@@ -128,6 +144,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
               placeholder="Enter examiner's name"
               value={formData["examined_by"] || ""}
               onChange={handleInputChange}
+              disabled={isCompleted}
             />
           </div>
 
@@ -139,6 +156,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
               rows={4}
               value={formData["clinical_history"] || ""}
               onChange={handleInputChange}
+              disabled={isCompleted}
             />
           </div>
         </CardContent>
@@ -146,7 +164,7 @@ export const ExaminationForm: React.FC<ExaminationFormProps> = ({
           <Button variant="outline" type="button">
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || isCompleted}>
             {loading ? (
               "Saving..."
             ) : (

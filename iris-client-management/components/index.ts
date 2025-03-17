@@ -4,3 +4,4 @@ export { SelectBranch } from "./select-branch";
 export { SearchClient } from "./search-client";
 export { Examinations } from "./examinations";
 export { ExaminationForm } from "./examination-form";
+export { CompletedExamination } from "./examination-completed";

@@ -17,7 +17,9 @@ interface ISearchClient {
   setSelectedClient: (data: any) => void;
 }
 
-export const SearchClient: React.FC<ISearchClient> = ({ setSelectedClient }) => {
+export const SearchClient: React.FC<ISearchClient> = ({
+  setSelectedClient,
+}) => {
   const [query, setQuery] = useState<string>("");
   const [selectedRegNo, setSelectedRegNo] = useState<string | null>(null);
   const { data, loading, error } = useFetch(searchClient, query);

@@ -27,10 +27,6 @@ export const Examinations: React.FC<IExamination> = ({
     return <p>Loading...</p>;
   }
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
   // Ensure `data.d` is an array to prevent runtime errors
   const exams = Array.isArray(data?.d) ? data.d : [];
 
@@ -121,7 +117,10 @@ export const Examinations: React.FC<IExamination> = ({
                           <Button size="icon" variant="ghost">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="icon">
+                          <Button
+                            size="icon"
+                            onClick={() => setSelectedClient(exam)}
+                          >
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         </div>

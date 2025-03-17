@@ -46,7 +46,7 @@ class RegisterClientExaminationView(APIView):
     
     def post(self, request, id, *args, **kwargs):
         examination = get_object_or_404(Examination, id=id) 
-        examined_by = f"{request.user.first_name} {request.user.last_name}"
+        examined_by = f"Dr. {request.user.first_name} {request.user.last_name}"
         serializer = ExaminationSerializer(examination, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(examined_by=examined_by, state="Completed")
