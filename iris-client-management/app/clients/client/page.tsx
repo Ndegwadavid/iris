@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Calendar, Edit, Eye, FileText, User } from "lucide-react"
-import Link from "next/link"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { Client, fetchClientById } from "@/lib/clients"
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Calendar, Edit, FileText, User } from "lucide-react";
+import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { Client, Examination, fetchClientById } from "@/lib/clients";
 
 export default function ClientPage() {
-  const searchParams = useSearchParams()
-  const id = searchParams.get("id")
-  const [client, setClient] = useState<Client | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  const [client, setClient] = useState<(Client & { examinations: Examination[] }) | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadClient = async () => {
@@ -25,33 +25,45 @@ export default function ClientPage() {
           title: "Error",
           description: "No client ID provided",
           variant: "destructive",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
 
-      setIsLoading(true)
-      const data = await fetchClientById(id)
-      if (data) {
-        setClient(data)
-      } else {
+      setIsLoading(true);
+      try {
+        console.log(`Fetching client with ID: ${id}`);
+        const data = await fetchClientById(id);
+        console.log("Client data received:", data);
+        setClient(data);
+        if (!data) {
+          toast({
+            title: "Warning",
+            description: "No client data returned",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching client:", error);
         toast({
           title: "Error",
-          description: "Client not found",
+          description: error instanceof Error ? error.message : "Failed to load client",
           variant: "destructive",
-        })
+        });
+        setClient(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false)
-    }
-    loadClient()
-  }, [id, toast])
+    };
+    loadClient();
+  }, [id, toast]);
 
   if (isLoading) {
-    return <div className="text-center text-muted-foreground">Loading client...</div>
+    return <div className="text-center text-muted-foreground">Loading client...</div>;
   }
 
   if (!client) {
-    return <div className="text-center text-muted-foreground">Client not found</div>
+    return <div className="text-center text-muted-foreground">Client not found</div>;
   }
 
   return (
@@ -91,11 +103,11 @@ export default function ClientPage() {
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Date of Birth</dt>
-                <dd className="text-sm">{client.date_of_birth}</dd>
+                <dd className="text-sm">{client.dob || "N/A"}</dd> {/* Fixed dob to date_of_birth */}
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
-                <dd className="text-sm">{client.phone_number}</dd>
+                <dd className="text-sm">{client.phone_number || "N/A"}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Email</dt>
@@ -114,28 +126,13 @@ export default function ClientPage() {
         </Card>
 
         <div className="space-y-6">
-          <Tabs defaultValue="prescriptions">
+          <Tabs defaultValue="examinations">
             <TabsList className="w-full">
-              <TabsTrigger value="prescriptions" className="flex-1">
-                <Eye className="mr-2 h-4 w-4" />
-                Prescriptions
-              </TabsTrigger>
               <TabsTrigger value="examinations" className="flex-1">
                 <FileText className="mr-2 h-4 w-4" />
                 Examination History
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="prescriptions" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Prescription History</CardTitle>
-                  <CardDescription>View all prescriptions for this client</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground">No prescriptions found.</div>
-                </CardContent>
-              </Card>
-            </TabsContent>
             <TabsContent value="examinations" className="pt-4">
               <Card>
                 <CardHeader>
@@ -143,7 +140,44 @@ export default function ClientPage() {
                   <CardDescription>View all examinations for this client</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-muted-foreground">No examination history found.</div>
+                  {client.examinations.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No examination history found.</div>
+                  ) : (
+                    <ul className="space-y-4">
+                      {client.examinations.map((exam) => (
+                        <li key={exam.id} className="text-sm border-b pb-2">
+                          <div>
+                            <span className="font-medium">
+                              {new Date(exam.examination_date).toLocaleDateString()}
+                            </span>
+                            : {exam.state} {exam.booked_for_sales ? "(Booked for Sales)" : ""}
+                          </div>
+                          <div>Examined by: {exam.examined_by || "N/A"}</div>
+                          <div>Clinical History: {exam.clinical_history || "N/A"}</div>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                              <strong>Right Eye:</strong><br />
+                              SPH: {exam.right_sph ?? "N/A"}<br />
+                              CYL: {exam.right_cyl ?? "N/A"}<br />
+                              Axis: {exam.right_axis ?? "N/A"}<br />
+                              Add: {exam.right_add ?? "N/A"}<br />
+                              VA: {exam.right_va || "N/A"}<br />
+                              IPD: {exam.right_ipd ?? "N/A"}
+                            </div>
+                            <div>
+                              <strong>Left Eye:</strong><br />
+                              SPH: {exam.left_sph ?? "N/A"}<br />
+                              CYL: {exam.left_cyl ?? "N/A"}<br />
+                              Axis: {exam.left_axis ?? "N/A"}<br />
+                              Add: {exam.left_add ?? "N/A"}<br />
+                              VA: {exam.left_va || "N/A"}<br />
+                              IPD: {exam.left_ipd ?? "N/A"}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -152,5 +186,5 @@ export default function ClientPage() {
       </div>
       <Toaster />
     </div>
-  )
+  );
 }

@@ -1,4 +1,3 @@
-// app/api/sales/[route]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getCompletedExaminations, getRecentSales, createSale } from "@/lib/api/sales";
 

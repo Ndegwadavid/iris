@@ -7,6 +7,9 @@ from ..models import Client, Examination, Sales, Branch
 from .serializers import ClientRegistrationSerializer, ExaminationSerializer, SalesSerializer, BranchSerializer
 from datetime import date
 from django.db.models import Q
+# added this line for cleint please look in to it 
+from .serializers import ClientSerializer
+
 
 
 class BranchListAPIView(APIView):
@@ -124,17 +127,15 @@ class SearchClientView(APIView):
 
     def get(self, request, *args, **kwargs):
         query = request.query_params.get("q", "").strip()
-        if not query:
-            return Response(
-                {"error": "Search query is required."}, 
-                status=status.HTTP_400_BAD_REQUEST
+        if query:
+            clients = Client.objects.filter(
+                Q(first_name__icontains=query) | 
+                Q(last_name__icontains=query) | 
+                Q(phone_number__icontains=query) | 
+                Q(email__icontains=query)
             )
-        clients = Client.objects.filter(
-            Q(first_name__icontains=query) | 
-            Q(last_name__icontains=query) | 
-            Q(phone_number__icontains=query) | 
-            Q(email__icontains=query)
-        )
+        else:
+            clients = Client.objects.all()  # added this line for returning all cleitns if search is not supplied with cleitns name
         if not clients.exists():
             return Response(
                 {"message": "No clients found."}, 
@@ -229,7 +230,16 @@ class PendingExaminationsView(APIView):
         serializer = ExaminationSerializer(examinations, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
     
-
+## retieve client view
+class RetrieveClientView(APIView):
+    def get(self, request, id):
+        try:
+            client = Client.objects.get(id=id)
+            serializer = ClientSerializer(client)
+            return Response(serializer.data)
+        except Client.DoesNotExist:
+            return Response({"error": "Client not found"}, status=404)
+        
 
 class GenerateReceiptView(APIView):
     permission_classes = [IsAuthenticated]

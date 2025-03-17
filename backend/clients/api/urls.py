@@ -10,7 +10,8 @@ SearchClientBalanceView,
 PendingExaminationsView,
 BranchListAPIView,
 GetBookedClientForSalesAPIView,
-GenerateReceiptView
+GenerateReceiptView,
+RetrieveClientView
 )
 
 app_name = "clients"
@@ -36,6 +37,9 @@ urlpatterns = [
     path('sales/<uuid:sales_id>/pay-balance/', SalesView.as_view(), name='update-client-sale-balance'),
     path('sales/search-client-balance/', SearchClientBalanceView.as_view(), name='search-client-balance'),
     
+    ## this missing urls tomatch the localhost:3000/clients
+    path('clients/', RetrieveClientView.as_view(), name='client_list'),
+    path('clients/client/<uuid:id>/', RetrieveClientView.as_view(), name='client_detail'),
     # Generate Receipt
     path("sales/generate-receipt/<uuid:sales_id>/", GenerateReceiptView.as_view(), name="generate-receipt"),
 

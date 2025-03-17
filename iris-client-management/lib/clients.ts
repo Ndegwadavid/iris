@@ -1,51 +1,57 @@
+// lib/clients.ts
 export type Client = {
-    id: string
-    reg_no: string
-    first_name: string
-    last_name: string
-    date_of_birth: string
-    phone_number: string
-    email: string
-    last_examination_date: string
+  id: string;
+  reg_no: string;
+  first_name: string;
+  last_name: string;
+  dob: string | null;
+  phone_number: string | null;
+  email: string | null;
+  last_examination_date: string | null;
+};
+
+export type Examination = {
+  id: string;
+  client: string;
+  examination_date: string;
+  examined_by: string;
+  clinical_history: string;
+  right_sph?: number | null;
+  right_cyl?: number | null;
+  right_axis?: number | null;
+  right_add?: number | null;
+  right_va?: string;
+  right_ipd?: number | null;
+  left_sph?: number | null;
+  left_cyl?: number | null;
+  left_axis?: number | null;
+  left_add?: number | null;
+  left_va?: string;
+  left_ipd?: number | null;
+  state: string;
+  booked_for_sales: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function fetchClients(searchQuery: string = ""): Promise<Client[]> {
+  const url = searchQuery
+    ? `/api/clients/list?q=${encodeURIComponent(searchQuery)}`
+    : "/api/clients/list";
+  const response = await fetch(url, { credentials: "include" });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: `Server returned ${response.status}` }));
+    throw new Error(errorData.error || `Failed to fetch clients (status: ${response.status})`);
   }
-  
-  const CLIENTS_API_URL = "http://127.0.0.1:8000/api/v001/clients/search/"
-  const CLIENT_DETAIL_API_URL = "http://127.0.0.1:8000/api/v001/clients/"
-  
-  export async function fetchClients(searchQuery: string = ""): Promise<Client[]> {
-    try {
-      const url = searchQuery ? `${CLIENTS_API_URL}?q=${encodeURIComponent(searchQuery)}` : CLIENTS_API_URL
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      })
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error("API error response:", errorData)
-        throw new Error(errorData.error || "Failed to fetch clients")
-      }
-      const data = await response.json()
-      return Array.isArray(data) ? data : (data.results || [])
-    } catch (error) {
-      console.error("Fetch error:", error)
-      return []
-    }
+  const data = await response.json();
+  return Array.isArray(data) ? data : data.results || [];
+}
+
+export async function fetchClientById(id: string): Promise<Client & { examinations: Examination[] }> {
+  const response = await fetch(`/clients/client?id=${id}`, { credentials: "include" }); // Changed from /detail/ to /client/
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: `Server returned ${response.status}` }));
+    throw new Error(errorData.error || `Failed to fetch client (status: ${response.status})`);
   }
-  
-  export async function fetchClientById(id: string): Promise<Client | null> {
-    try {
-      const response = await fetch(`${CLIENT_DETAIL_API_URL}${id}/`, {
-        method: "GET",
-        credentials: "include",
-      })
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to fetch client")
-      }
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error("Error fetching client:", error)
-      return null
-    }
-  }
+  return await response.json();
+}

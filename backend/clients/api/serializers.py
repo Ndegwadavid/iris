@@ -113,3 +113,11 @@ class SalesSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+## adn this as well
+class ClientSerializer(serializers.ModelSerializer):
+    examinations = ExaminationSerializer(many=True, read_only=True, source="examinations.all")  # Adjust source if needed
+    
+    class Meta:
+        model = Client
+        fields = ["id", "reg_no", "first_name", "last_name", "date_of_birth", "phone_number", "email", "last_examination_date", "examinations"]
