@@ -41,7 +41,7 @@ export default function ClientsPage() {
       }
     }
     loadClients()
-  }, [toast]) // Remove searchQuery from deps to fetch only on mount
+  }, [toast])
 
   const handleSearch = async () => {
     setIsLoading(true)
@@ -77,7 +77,7 @@ export default function ClientsPage() {
           placeholder="Search clients by name, phone, or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSearch()} // Search on Enter
+          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
         />
         <Button size="icon" variant="ghost" onClick={handleSearch}>
           <Search className="h-4 w-4" />

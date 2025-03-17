@@ -1,19 +1,58 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Calendar, Edit, Eye, FileText, User } from "lucide-react"
 import Link from "next/link"
-import { SAMPLE_CLIENTS } from "@/lib/constants"
+import { useToast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import { Client, fetchClientById } from "@/lib/clients"
 
 export default function ClientPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get("id")
+  const [client, setClient] = useState<Client | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
 
-  // Find client by ID
-  const client = SAMPLE_CLIENTS.find((c) => c.id === Number(id)) || SAMPLE_CLIENTS[0]
+  useEffect(() => {
+    const loadClient = async () => {
+      if (!id) {
+        toast({
+          title: "Error",
+          description: "No client ID provided",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
+      const data = await fetchClientById(id)
+      if (data) {
+        setClient(data)
+      } else {
+        toast({
+          title: "Error",
+          description: "Client not found",
+          variant: "destructive",
+        })
+      }
+      setIsLoading(false)
+    }
+    loadClient()
+  }, [id, toast])
+
+  if (isLoading) {
+    return <div className="text-center text-muted-foreground">Loading client...</div>
+  }
+
+  if (!client) {
+    return <div className="text-center text-muted-foreground">Client not found</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -23,7 +62,7 @@ export default function ClientPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">{client.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{`${client.first_name} ${client.last_name}`}</h1>
         <div className="ml-auto flex gap-2">
           <Button variant="outline">
             <Calendar className="mr-2 h-4 w-4" />
@@ -48,27 +87,27 @@ export default function ClientPage() {
             <dl className="space-y-4">
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Registration Number</dt>
-                <dd className="text-sm">{client.regNo}</dd>
+                <dd className="text-sm">{client.reg_no}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Date of Birth</dt>
-                <dd className="text-sm">{client.dob}</dd>
+                <dd className="text-sm">{client.date_of_birth}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
-                <dd className="text-sm">{client.phone}</dd>
+                <dd className="text-sm">{client.phone_number}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Email</dt>
-                <dd className="text-sm">{client.email}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Address</dt>
-                <dd className="text-sm">{client.address}</dd>
+                <dd className="text-sm">{client.email || "N/A"}</dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Last Visit</dt>
-                <dd className="text-sm">{client.lastVisit}</dd>
+                <dd className="text-sm">
+                  {client.last_examination_date
+                    ? new Date(client.last_examination_date).toLocaleDateString()
+                    : "N/A"}
+                </dd>
               </div>
             </dl>
           </CardContent>
@@ -111,7 +150,7 @@ export default function ClientPage() {
           </Tabs>
         </div>
       </div>
+      <Toaster />
     </div>
   )
 }
-
