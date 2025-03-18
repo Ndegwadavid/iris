@@ -12,7 +12,8 @@ PendingExaminationsView,
 BranchListAPIView,
 GetBookedClientForSalesAPIView,
 GenerateReceiptView,
-RetrieveClientView
+RetrieveClientView,
+SingleClientInfoView
 )
 
 app_name = "clients"
@@ -23,6 +24,7 @@ urlpatterns = [
     
     # Client Registration
     path('register/', RegisterClientView.as_view(), name="register_client"),
+    path('client-info/<uuid:client_id>/', SingleClientInfoView.as_view(), name="client-info"),
     
     # Examination Endpoints
     path('examination/<uuid:id>/register/', RegisterClientExaminationView.as_view(), name="register_examination"),

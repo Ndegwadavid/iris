@@ -293,3 +293,20 @@ class GenerateReceiptView(APIView):
         }
         
         return Response(receipt, status=status.HTTP_200_OK)
+
+
+# Gets client  based on id the  and client all examinations
+class SingleClientInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request,client_id=None, *args, **kwargs):
+        client = get_object_or_404(Client, id=client_id)
+        client_data = ClientSerializer(client).data
+        examinations = client.examinations.all()
+        examinations_data = ExaminationSerializer(examinations, many=True).data
+       
+        
+        return Response({
+            "client": client_data,
+            "examinations" : examinations_data
+        }, status=status.HTTP_201_CREATED)
