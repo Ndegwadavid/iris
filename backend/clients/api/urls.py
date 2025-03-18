@@ -42,6 +42,8 @@ urlpatterns = [
     path('clients/', RetrieveClientView.as_view(), name='client_list'),
     path('clients/client/<uuid:id>/', RetrieveClientView.as_view(), name='client_detail'),
     path('clients/search-client/', views.SearchClientView.as_view(), name='search-client'),
+    ## branches view
+
     # Generate Receipt
     path("sales/generate-receipt/<uuid:sales_id>/", GenerateReceiptView.as_view(), name="generate-receipt"),
 

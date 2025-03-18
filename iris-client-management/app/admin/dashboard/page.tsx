@@ -1,41 +1,120 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  AlertCircle,
-  BarChart3,
-  Download,
-  Eye,
-  Plus,
-  Users,
-} from "lucide-react";
-
-// Sample staff data
-const staffMembers = [
-  { id: 1, name: "John Smith", role: "Optometrist", status: "Active" },
-  { id: 2, name: "Sarah Johnson", role: "Sales Associate", status: "Active" },
-  { id: 3, name: "Michael Brown", role: "Receptionist", status: "Inactive" },
-];
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart3, Download, Users, Eye, Plus, DollarSign, MapPin } from "lucide-react";
+import {
+  getTotalClients,
+  getTotalExaminations,
+  getTotalSales,
+  getStaffMembers,
+  createStaffMember,
+  getBranches,
+  createBranch,
+ // StaffMember,
+ // Branch,
+} from "@/lib/admin-api";
 
 export default function AdminDashboardPage() {
   const [dateRange, setDateRange] = useState("month");
+  const [totalClients, setTotalClients] = useState<number | null>(null);
+  const [totalExaminations, setTotalExaminations] = useState<number | null>(null);
+  const [totalSales, setTotalSales] = useState<number | null>(null);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newStaff, setNewStaff] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    role: "" as "staff" | "receptionist" | "optometrist",
+    password: "",
+  });
+  const [newBranch, setNewBranch] = useState({ name: "", code: "" });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [clients, exams, sales, staff, branchData] = await Promise.all([
+          getTotalClients(),
+          getTotalExaminations(),
+          getTotalSales(),
+          getStaffMembers(),
+          getBranches(),
+        ]);
+        setTotalClients(clients);
+        setTotalExaminations(exams);
+        setTotalSales(sales);
+        setStaffMembers(staff);
+        setBranches(branchData);
+      } catch (err) {
+        setError("Failed to load dashboard data");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const createdStaff = await createStaffMember(newStaff);
+      setStaffMembers([...staffMembers, createdStaff]);
+      setNewStaff({
+        first_name: "",
+        last_name: "",
+        email: "",
+        role: "" as "staff" | "receptionist" | "optometrist",
+        password: "",
+      });
+    } catch (err) {
+      setError("Failed to create staff member");
+      console.error(err);
+    }
+  };
+
+  const handleCreateBranch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const createdBranch = await createBranch(newBranch);
+      setBranches([...branches, createdBranch]);
+      setNewBranch({ name: "", code: "" });
+    } catch (err) {
+      setError("Failed to create branch");
+      console.error(err);
+    }
+  };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage your optical business</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Admin Dashboard</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Manage your optical business with ease</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Select defaultValue={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -45,170 +124,289 @@ export default function AdminDashboardPage() {
               <SelectItem value="year">This Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
+          <Button variant="outline" className="bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600">
+            <Download className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-300" />
             Export Data
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      {error && <div className="text-red-500 bg-red-100 dark:bg-red-900 p-2 rounded-md">{error}</div>}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="bg-blue-50 dark:bg-blue-900 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-200">Total Clients</CardTitle>
+            <Users className="h-4 w-4 text-blue-500 dark:text-blue-300" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2,345</div>
-            <p className="text-xs text-muted-foreground">+180 this month</p>
+          <CardContent className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-blue-800 dark:text-blue-100">{loading ? "..." : totalClients ?? 0}</div>
+            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" title="Live Data" />
+            <p className="text-xs text-blue-600 dark:text-blue-300">Registered clients</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-green-50 dark:bg-green-900 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Prescriptions</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-200">Total Examinations</CardTitle>
+            <Eye className="h-4 w-4 text-green-500 dark:text-green-300" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">245</div>
-            <p className="text-xs text-muted-foreground">+22 this week</p>
+          <CardContent className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-green-800 dark:text-green-100">{loading ? "..." : totalExaminations ?? 0}</div>
+            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" title="Live Data" />
+            <p className="text-xs text-green-600 dark:text-green-300">Completed exams</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-purple-50 dark:bg-purple-900 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Staff Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-200">Staff Members</CardTitle>
+            <Users className="h-4 w-4 text-purple-500 dark:text-purple-300" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">15</div>
-            <p className="text-xs text-muted-foreground">Active employees</p>
+          <CardContent className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-purple-800 dark:text-purple-100">{loading ? "..." : staffMembers.length}</div>
+            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" title="Live Data" />
+            <p className="text-xs text-purple-600 dark:text-purple-300">Active employees</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-orange-50 dark:bg-orange-900 shadow-md hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-200">Total Sales</CardTitle>
+            <DollarSign className="h-4 w-4 text-orange-500 dark:text-orange-300" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">Requires attention</p>
+          <CardContent className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-orange-800 dark:text-orange-100">{loading ? "..." : totalSales ?? 0}</div>
+            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" title="Live Data" />
+            <p className="text-xs text-orange-600 dark:text-orange-300">Completed orders</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-teal-50 dark:bg-teal-900 shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-teal-700 dark:text-teal-200">Total Branches</CardTitle>
+            <MapPin className="h-4 w-4 text-teal-500 dark:text-teal-300" />
+          </CardHeader>
+          <CardContent className="flex items-center gap-2">
+            <div className="text-2xl font-bold text-teal-800 dark:text-teal-100">{loading ? "..." : branches.length}</div>
+            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" title="Live Data" />
+            <p className="text-xs text-teal-600 dark:text-teal-300">Active branches</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="staff" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="staff">Staff Management</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+          <TabsTrigger value="staff" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">Staff Management</TabsTrigger>
+          <TabsTrigger value="branches" className="data-[state=active]:bg-teal-100 data-[state=active]:text-teal-700">Branch Management</TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700">Analytics</TabsTrigger>
+          <TabsTrigger value="settings" className="data-[state=active]:bg-gray-100 data-[state=active]:text-gray-700">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="staff" className="space-y-4">
-          <Card>
-            <CardHeader>
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardHeader className="border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Staff Members</CardTitle>
-                  <CardDescription>Manage employee accounts and permissions</CardDescription>
-                </div>
-                <Button>
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Staff Members</CardTitle>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Staff
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <div className="grid grid-cols-4 border-b bg-muted/50 p-3 text-sm font-medium">
+            <CardContent className="pt-4">
+              <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="grid grid-cols-5 bg-blue-50 dark:bg-blue-900 p-3 text-sm font-medium text-blue-700 dark:text-blue-200">
                   <div>ID</div>
                   <div>Name</div>
+                  <div>Email</div>
                   <div>Role</div>
                   <div>Status</div>
                 </div>
-                {staffMembers.map((staff) => (
-                  <div key={staff.id} className="grid grid-cols-4 border-b p-3 text-sm last:border-0">
-                    <div className="font-medium">#{staff.id}</div>
-                    <div>{staff.name}</div>
-                    <div>{staff.role}</div>
-                    <div>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          staff.status === "Active"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                        }`}
-                      >
-                        {staff.status}
-                      </span>
+                {loading ? (
+                  <div className="p-3 text-center text-gray-600 dark:text-gray-400">Loading...</div>
+                ) : staffMembers.length === 0 ? (
+                  <div className="p-3 text-center text-gray-600 dark:text-gray-400">No staff members found</div>
+                ) : (
+                  staffMembers.map((staff) => (
+                    <div
+                      key={staff.id}
+                      className="grid grid-cols-5 border-b border-gray-200 dark:border-gray-700 p-3 text-sm last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{staff.id.slice(0, 8)}</div>
+                      <div className="text-gray-800 dark:text-gray-200">{`${staff.first_name} ${staff.last_name}`}</div>
+                      <div className="text-gray-700 dark:text-gray-300">{staff.email}</div>
+                      <div className="text-gray-700 dark:text-gray-300">{staff.role}</div>
+                      <div>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            staff.is_active
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          }`}
+                        >
+                          {staff.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Add New Staff Member</CardTitle>
-              <CardDescription>Create a new employee account</CardDescription>
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Add New Staff Member</CardTitle>
             </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
+            <CardContent className="pt-4">
+              <form onSubmit={handleCreateStaff} className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="John" />
+                    <Label htmlFor="firstName" className="text-gray-700 dark:text-gray-300">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={newStaff.first_name}
+                      onChange={(e) => setNewStaff({ ...newStaff, first_name: e.target.value })}
+                      placeholder="John"
+                      className="border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Smith" />
+                    <Label htmlFor="lastName" className="text-gray-700 dark:text-gray-300">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      value={newStaff.last_name}
+                      onChange={(e) => setNewStaff({ ...newStaff, last_name: e.target.value })}
+                      placeholder="Smith"
+                      className="border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="john.smith@example.com" />
+                    <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newStaff.email}
+                      onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
+                      placeholder="john.smith@example.com"
+                      className="border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select>
-                      <SelectTrigger>
+                    <Label htmlFor="role" className="text-gray-700 dark:text-gray-300">Role</Label>
+                    <Select
+                      value={newStaff.role}
+                      onValueChange={(value) =>
+                        setNewStaff({ ...newStaff, role: value as "staff" | "receptionist" | "optometrist" })
+                      }
+                    >
+                      <SelectTrigger className="border-gray-300 dark:border-gray-600">
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="optometrist">Optometrist</SelectItem>
-                        <SelectItem value="sales">Sales Associate</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
                         <SelectItem value="receptionist">Receptionist</SelectItem>
-                        <SelectItem value="admin">Administrator</SelectItem>
+                        <SelectItem value="optometrist">Optometrist</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Temporary Password</Label>
-                    <Input id="password" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input id="confirmPassword" type="password" />
+                    <Label htmlFor="password" className="text-gray-700 dark:text-gray-300">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={newStaff.password}
+                      onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })}
+                      className="border-gray-300 dark:border-gray-600 focus:ring-blue-500"
+                    />
                   </div>
                 </div>
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">Create Staff</Button>
               </form>
             </CardContent>
-            <CardFooter>
-              <Button>Create Account</Button>
-            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="branches" className="space-y-4">
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Branches</CardTitle>
+                <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Branch
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="grid grid-cols-3 bg-teal-50 dark:bg-teal-900 p-3 text-sm font-medium text-teal-700 dark:text-teal-200">
+                  <div>ID</div>
+                  <div>Name</div>
+                  <div>Code</div>
+                </div>
+                {loading ? (
+                  <div className="p-3 text-center text-gray-600 dark:text-gray-400">Loading...</div>
+                ) : branches.length === 0 ? (
+                  <div className="p-3 text-center text-gray-600 dark:text-gray-400">No branches found</div>
+                ) : (
+                  branches.map((branch) => (
+                    <div
+                      key={branch.id}
+                      className="grid grid-cols-3 border-b border-gray-200 dark:border-gray-700 p-3 text-sm last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{branch.id}</div>
+                      <div className="text-gray-800 dark:text-gray-200">{branch.name}</div>
+                      <div className="text-gray-700 dark:text-gray-300">{branch.code}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Add New Branch</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <form onSubmit={handleCreateBranch} className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="branchName" className="text-gray-700 dark:text-gray-300">Branch Name</Label>
+                    <Input
+                      id="branchName"
+                      value={newBranch.name}
+                      onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
+                      placeholder="Main Branch"
+                      className="border-gray-300 dark:border-gray-600 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="branchCode" className="text-gray-700 dark:text-gray-300">Branch Code</Label>
+                    <Input
+                      id="branchCode"
+                      value={newBranch.code}
+                      onChange={(e) => setNewBranch({ ...newBranch, code: e.target.value })}
+                      placeholder="MB001"
+                      maxLength={5}
+                      className="border-gray-300 dark:border-gray-600 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white">Create Branch</Button>
+              </form>
+            </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Analytics</CardTitle>
-              <CardDescription>View detailed performance metrics</CardDescription>
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Business Analytics</CardTitle>
             </CardHeader>
             <CardContent className="h-[400px] flex items-center justify-center">
               <div className="text-center">
-                <BarChart3 className="mx-auto h-16 w-16 text-muted-foreground/50" />
-                <h3 className="mt-4 text-lg font-medium">Analytics Dashboard</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Detailed analytics would be displayed here in a production environment.
+                <BarChart3 className="mx-auto h-16 w-16 text-purple-500 dark:text-purple-300" />
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  Analytics placeholder (e.g., charts for clients, exams, sales).
                 </p>
               </div>
             </CardContent>
@@ -216,39 +414,22 @@ export default function AdminDashboardPage() {
         </TabsContent>
 
         <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-              <CardDescription>Configure system preferences</CardDescription>
+          <Card className="bg-white dark:bg-gray-800 shadow-md">
+            <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">System Settings</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="pt-4">
+              <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label>Business Information</Label>
-                  <Input placeholder="Business Name" />
+                  <Label className="text-gray-700 dark:text-gray-300">Business Name</Label>
+                  <Input placeholder="Optical Store" className="border-gray-300 dark:border-gray-600 focus:ring-gray-500" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Contact Email</Label>
-                  <Input type="email" placeholder="admin@example.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label>System Preferences</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="utc">UTC</SelectItem>
-                      <SelectItem value="est">EST</SelectItem>
-                      <SelectItem value="pst">PST</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-gray-700 dark:text-gray-300">Contact Email</Label>
+                  <Input type="email" placeholder="admin@example.com" className="border-gray-300 dark:border-gray-600 focus:ring-gray-500" />
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button>Save Changes</Button>
-            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
