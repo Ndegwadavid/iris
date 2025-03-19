@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import(
 RegisterClientView,
 RegisterClientExaminationView,
@@ -10,7 +11,9 @@ SearchClientBalanceView,
 PendingExaminationsView,
 BranchListAPIView,
 GetBookedClientForSalesAPIView,
-GenerateReceiptView
+GenerateReceiptView,
+RetrieveClientView,
+SingleClientInfoView
 )
 
 app_name = "clients"
@@ -21,6 +24,7 @@ urlpatterns = [
     
     # Client Registration
     path('register/', RegisterClientView.as_view(), name="register_client"),
+    path('client-info/<uuid:client_id>/', SingleClientInfoView.as_view(), name="client-info"),
     
     # Examination Endpoints
     path('examination/<uuid:id>/register/', RegisterClientExaminationView.as_view(), name="register_examination"),
@@ -36,6 +40,12 @@ urlpatterns = [
     path('sales/<uuid:sales_id>/pay-balance/', SalesView.as_view(), name='update-client-sale-balance'),
     path('sales/search-client-balance/', SearchClientBalanceView.as_view(), name='search-client-balance'),
     
+    ## this missing urls tomatch the localhost:3000/clients
+    path('clients/', RetrieveClientView.as_view(), name='client_list'),
+    path('clients/client/<uuid:id>/', RetrieveClientView.as_view(), name='client_detail'),
+    path('clients/search-client/', views.SearchClientView.as_view(), name='search-client'),
+    ## branches view
+
     # Generate Receipt
     path("sales/generate-receipt/<uuid:sales_id>/", GenerateReceiptView.as_view(), name="generate-receipt"),
 

@@ -1,53 +1,51 @@
-"use client"
+// app/sales/page.tsx
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { ArrowRight, CheckCircle, CreditCard, Loader2, ShoppingBag, ShoppingCart } from "lucide-react"
-import { FRAME_OPTIONS, LENS_OPTIONS } from "@/lib/constants"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-
-type Examination = {
-  id: string
-  client_name: string
-  examination_date: string
-  state: string
-  booked_for_sales: boolean
-}
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { ArrowRight, Loader2, ShoppingBag, ShoppingCart } from "lucide-react";
+import { FRAME_OPTIONS, LENS_OPTIONS } from "@/lib/constants";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Examination, Sale } from "@/lib/sales";
+import Image from "next/image";
 
 type SalePayload = {
-  examination: string
-  frame_brand: string
-  frame_model: string
-  frame_color: string
-  frame_quantity: number
-  frame_price: number
-  lens_brand: string
-  lens_type: string
-  lens_material: string
-  lens_coating: string
-  lens_quantity: number
-  lens_price: number
-  fitting_instructions: string
-  delivery_date: string
-  booked_by: string
-  advance_payment_method: string
-  advance_paid: number
-  mpesa_transaction_code?: string
-}
+  examination: string;
+  frame_brand: string;
+  frame_model: string;
+  frame_color: string;
+  frame_quantity: number;
+  frame_price: number;
+  lens_brand: string;
+  lens_type: string;
+  lens_material: string;
+  lens_coating: string;
+  lens_quantity: number;
+  lens_price: number;
+  fitting_instructions: string;
+  delivery_date: string;
+  booked_by: string;
+  payment_method: string;
+  advance_paid: number;
+  total_paid: number;
+  mpesa_transaction_code?: string;
+};
+
+const API_BASE_URL = "http://localhost:3000/api/sales";
 
 export default function SalesPage() {
-  const [activeTab, setActiveTab] = useState("new-sale")
-  const [examinations, setExaminations] = useState<Examination[]>([])
-  const [selectedExam, setSelectedExam] = useState<string>("")
+  const [activeTab, setActiveTab] = useState("new-sale");
+  const [examinations, setExaminations] = useState<Examination[]>([]);
+  const [selectedExam, setSelectedExam] = useState<string>("");
   const [saleDetails, setSaleDetails] = useState<SalePayload>({
     examination: "",
     frame_brand: "",
@@ -64,129 +62,94 @@ export default function SalesPage() {
     fitting_instructions: "",
     delivery_date: "",
     booked_by: "",
-    advance_payment_method: "Cash",
+    payment_method: "Cash",
     advance_paid: 0,
+    total_paid: 0,
     mpesa_transaction_code: "",
-  })
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [recentSales, setRecentSales] = useState<any[]>([])
-  const { toast } = useToast()
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const { toast } = useToast();
 
-  const API_URL = "http://127.0.0.1:8000/api/v001/clients/sales/"
-  const EXAMINATIONS_URL = "http://127.0.0.1:8000/api/v001/clients/examinations/"
-
-  // Fetch all examinations and filter for completed ones 
   useEffect(() => {
-    const fetchExaminations = async () => {
+    const loadExaminations = async () => {
       try {
-        const response = await fetch(EXAMINATIONS_URL, {
-          method: "GET",
-          credentials: "include",
-        })
-        if (!response.ok) throw new Error("Failed to fetch examinations")
-        const data = await response.json()
-        const completedExams = data.d.filter(
-          (exam: Examination) => exam.state === "Completed" && exam.booked_for_sales
-        )
-        setExaminations(completedExams)
-        console.log("Fetched completed examinations:", completedExams)
+        const response = await fetch(`${API_BASE_URL}/examinations`, { credentials: "include" });
+        if (!response.ok) throw new Error("Failed to fetch examinations");
+        const data = await response.json();
+        setExaminations(data);
       } catch (error) {
-        console.error("Error fetching examinations:", error)
-        toast({ title: "Error", description: "Failed to load examinations", variant: "destructive" })
+        toast({ title: "Error", description: "Failed to load examinations", variant: "destructive" });
       }
-    }
-    fetchExaminations()
-  }, [toast])
+    };
+    loadExaminations();
+  }, [toast]);
 
-  // Fetch recent sales
   useEffect(() => {
-    const fetchRecentSales = async () => {
+    const loadRecentSales = async () => {
       try {
-        const response = await fetch(API_URL, {
-          method: "GET",
-          credentials: "include",
-        })
-        if (!response.ok) throw new Error("Failed to fetch sales")
-        const data = await response.json()
-        setRecentSales(data)
-        console.log("Fetched recent sales:", data)
+        const response = await fetch(`${API_BASE_URL}/recent`, { credentials: "include" });
+        if (!response.ok) throw new Error("Failed to fetch recent sales");
+        const data = await response.json();
+        setRecentSales(data);
       } catch (error) {
-        console.error("Error fetching sales:", error)
+        toast({ title: "Error", description: "Failed to load recent sales", variant: "destructive" });
       }
-    }
-    if (activeTab === "recent-sales") fetchRecentSales()
-  }, [activeTab])
+    };
+    if (activeTab === "recent-sales") loadRecentSales();
+  }, [activeTab, toast]);
 
-  // Handle input changes
   const handleInputChange = (field: keyof SalePayload, value: string | number) => {
     setSaleDetails((prev) => ({
       ...prev,
-      [field]: value,
-    }))
-  }
+      [field]: typeof value === "number" ? Math.floor(value) : value,
+    }));
+  };
 
-  // Calculate totals (for UI display only)
   const calculateTotals = () => {
-    const frameTotal = saleDetails.frame_price * saleDetails.frame_quantity
-    const lensTotal = saleDetails.lens_price * saleDetails.lens_quantity
-    const total = frameTotal + lensTotal
-    const advance = saleDetails.advance_paid
-    const balance = total - advance
-    return { total, advance, balance }
-  }
+    const frameTotal = saleDetails.frame_price * saleDetails.frame_quantity;
+    const lensTotal = saleDetails.lens_price * saleDetails.lens_quantity;
+    const total = frameTotal + lensTotal;
+    const advance = saleDetails.advance_paid || 0;
+    const paid = saleDetails.total_paid || 0;
+    const balance = total - paid; // Balance is total minus total paid
+    return { total, advance, paid, balance };
+  };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!selectedExam) {
-      toast({ title: "Error", description: "Please select an examination", variant: "destructive" })
-      return
+      toast({ title: "Error", description: "Please select an examination", variant: "destructive" });
+      return;
     }
 
-    setIsProcessing(true)
-    const payload = {
+    setIsProcessing(true);
+    const payload: SalePayload = {
+      ...saleDetails,
       examination: selectedExam,
-      frame_brand: saleDetails.frame_brand,
-      frame_model: saleDetails.frame_model,
-      frame_color: saleDetails.frame_color,
-      frame_quantity: Number(saleDetails.frame_quantity),
-      frame_price: Number(saleDetails.frame_price),
-      lens_brand: saleDetails.lens_brand,
-      lens_type: saleDetails.lens_type,
-      lens_material: saleDetails.lens_material,
-      lens_coating: saleDetails.lens_coating,
-      lens_quantity: Number(saleDetails.lens_quantity),
-      lens_price: Number(saleDetails.lens_price),
-      fitting_instructions: saleDetails.fitting_instructions,
-      delivery_date: saleDetails.delivery_date,
-      booked_by: saleDetails.booked_by,
-      advance_payment_method: saleDetails.advance_payment_method,
-      advance_paid: Number(saleDetails.advance_paid),
-      ...(saleDetails.advance_payment_method === "Mpesa" && {
-        mpesa_transaction_code: saleDetails.mpesa_transaction_code,
-      }),
-    }
-
-    console.log("Submitting payload:", payload)
+    };
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_BASE_URL}/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to create sale")
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create sale");
       }
 
-      const result = await response.json()
-      setIsProcessing(false)
-      toast({ title: "Success", description: result.message || "Sale recorded successfully" })
+      const result = await response.json();
+      setIsProcessing(false);
+      toast({
+        title: "Sale Completed",
+        description: "The sale has been successfully recorded.",
+        variant: "default",
+      });
 
-      // Reset form
       setSaleDetails({
         examination: "",
         frame_brand: "",
@@ -203,23 +166,28 @@ export default function SalesPage() {
         fitting_instructions: "",
         delivery_date: "",
         booked_by: "",
-        advance_payment_method: "Cash",
+        payment_method: "Cash",
         advance_paid: 0,
+        total_paid: 0,
         mpesa_transaction_code: "",
-      })
-      setSelectedExam("")
-      setActiveTab("recent-sales")
+      });
+      setSelectedExam("");
+      setActiveTab("recent-sales");
+
+      const salesResponse = await fetch(`${API_BASE_URL}/recent`, { credentials: "include" });
+      if (salesResponse.ok) setRecentSales(await salesResponse.json());
     } catch (error) {
-      setIsProcessing(false)
+      setIsProcessing(false);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to process sale",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const totals = calculateTotals()
+  const totals = calculateTotals();
+  const selectedClient = examinations.find((exam) => exam.id === selectedExam);
 
   return (
     <div className="space-y-6">
@@ -269,6 +237,13 @@ export default function SalesPage() {
                       )}
                     </SelectContent>
                   </Select>
+                  {selectedClient && (
+                    <div className="mt-4 text-sm">
+                      <p><strong>Client:</strong> {selectedClient.client_name}</p>
+                      <p><strong>Reg No:</strong> {selectedClient.client.reg_no}</p>
+                      <p><strong>Last Exam:</strong> {new Date(selectedClient.client.last_examination_date).toLocaleDateString()}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -289,6 +264,10 @@ export default function SalesPage() {
                         <span>Advance Paid</span>
                         <span>KES {totals.advance.toLocaleString()}</span>
                       </div>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Total Paid</span>
+                        <span>KES {totals.paid.toLocaleString()}</span>
+                      </div>
                       <div className="flex justify-between font-medium text-primary">
                         <span>Balance Due</span>
                         <span>KES {totals.balance.toLocaleString()}</span>
@@ -296,27 +275,31 @@ export default function SalesPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <Label className="text-base font-medium">Advance Payment Method</Label>
+                      <Label className="text-base font-medium">Payment Method</Label>
                       <RadioGroup
-                        value={saleDetails.advance_payment_method}
-                        onValueChange={(value) => handleInputChange("advance_payment_method", value)}
+                        value={saleDetails.payment_method}
+                        onValueChange={(value) => handleInputChange("payment_method", value)}
                         className="grid grid-cols-2 gap-4"
                       >
                         <div className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted">
                           <RadioGroupItem value="Cash" id="cash" />
+                          <Image src="/icons/cash.png" alt="Cash" width={20} height={20} />
                           <Label htmlFor="cash" className="cursor-pointer">Cash</Label>
                         </div>
                         <div className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted">
                           <RadioGroupItem value="Mpesa" id="mpesa" />
+                          <Image src="/icons/mpesa.png" alt="M-Pesa" width={20} height={20} />
                           <Label htmlFor="mpesa" className="cursor-pointer">M-Pesa</Label>
                         </div>
-                        <div className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted">
-                          <RadioGroupItem value="Card" id="card" />
-                          <Label htmlFor="card" className="cursor-pointer">Credit Card</Label>
+                        <div className="flex items-center space-x-2 rounded-md border p-4 cursor-not-allowed opacity-50">
+                          <RadioGroupItem value="Card" id="card" disabled />
+                          <Image src="/icons/card.png" alt="Card" width={20} height={20} />
+                          <Label htmlFor="card" className="cursor-not-allowed">Credit Card</Label>
                         </div>
-                        <div className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted">
-                          <RadioGroupItem value="Bank" id="bank" />
-                          <Label htmlFor="bank" className="cursor-pointer">Bank Transfer</Label>
+                        <div className="flex items-center space-x-2 rounded-md border p-4 cursor-not-allowed opacity-50">
+                          <RadioGroupItem value="Bank" id="bank" disabled />
+                          <Image src="/icons/bank.png" alt="Bank" width={20} height={20} />
+                          <Label htmlFor="bank" className="cursor-not-allowed">Bank Transfer</Label>
                         </div>
                         <div className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted col-span-2">
                           <RadioGroupItem value="Insurance" id="insurance" />
@@ -330,12 +313,20 @@ export default function SalesPage() {
                           <Input
                             type="number"
                             value={saleDetails.advance_paid}
-                            onChange={(e) => handleInputChange("advance_paid", Number(e.target.value))}
+                            onChange={(e) => handleInputChange("advance_paid", Math.floor(Number(e.target.value)))}
                             min="0"
-                            step="0.01"
                           />
                         </div>
-                        {saleDetails.advance_payment_method === "Mpesa" && (
+                        <div className="space-y-2">
+                          <Label>Total Paid (KES)</Label>
+                          <Input
+                            type="number"
+                            value={saleDetails.total_paid}
+                            onChange={(e) => handleInputChange("total_paid", Math.floor(Number(e.target.value)))}
+                            min="0"
+                          />
+                        </div>
+                        {saleDetails.payment_method === "Mpesa" && (
                           <div className="space-y-2">
                             <Label>M-Pesa Transaction Code</Label>
                             <Input
@@ -354,7 +345,7 @@ export default function SalesPage() {
                     {isProcessing ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
                     ) : (
-                      <><CreditCard className="mr-2 h-4 w-4" /> Process Sale</>
+                      <>Process Sale</>
                     )}
                   </Button>
                 </CardFooter>
@@ -420,7 +411,7 @@ export default function SalesPage() {
                         <Input
                           type="number"
                           value={saleDetails.frame_quantity}
-                          onChange={(e) => handleInputChange("frame_quantity", Number(e.target.value))}
+                          onChange={(e) => handleInputChange("frame_quantity", Math.floor(Number(e.target.value)))}
                           min="1"
                         />
                       </div>
@@ -429,9 +420,8 @@ export default function SalesPage() {
                         <Input
                           type="number"
                           value={saleDetails.frame_price}
-                          onChange={(e) => handleInputChange("frame_price", Number(e.target.value))}
+                          onChange={(e) => handleInputChange("frame_price", Math.floor(Number(e.target.value)))}
                           min="0"
-                          step="0.01"
                         />
                       </div>
                     </div>
@@ -512,7 +502,7 @@ export default function SalesPage() {
                         <Input
                           type="number"
                           value={saleDetails.lens_quantity}
-                          onChange={(e) => handleInputChange("lens_quantity", Number(e.target.value))}
+                          onChange={(e) => handleInputChange("lens_quantity", Math.floor(Number(e.target.value)))}
                           min="1"
                         />
                       </div>
@@ -521,9 +511,8 @@ export default function SalesPage() {
                         <Input
                           type="number"
                           value={saleDetails.lens_price}
-                          onChange={(e) => handleInputChange("lens_price", Number(e.target.value))}
+                          onChange={(e) => handleInputChange("lens_price", Math.floor(Number(e.target.value)))}
                           min="0"
-                          step="0.01"
                         />
                       </div>
                     </div>
@@ -581,7 +570,7 @@ export default function SalesPage() {
               <div className="rounded-md border">
                 <div className="grid grid-cols-7 border-b bg-muted/50 p-3 text-sm font-medium">
                   <div>ID</div>
-                  <div>Client</div>
+                  <div>Client Name</div>
                   <div>Frame</div>
                   <div>Lens</div>
                   <div>Total</div>
@@ -617,5 +606,5 @@ export default function SalesPage() {
       </Tabs>
       <Toaster />
     </div>
-  )
+  );
 }
