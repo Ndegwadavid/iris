@@ -158,7 +158,11 @@ export default function RootLayout({
                   </Button>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="rounded-full p-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full p-1"
+                      >
                         <Image
                           src="/images/davy.png"
                           alt="Profile"
@@ -208,7 +212,10 @@ export default function RootLayout({
                         <MessageSquare className="h-5 w-5" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80 p-4 border-2 border-muted rounded-lg shadow-lg bg-background" align="end">
+                    <PopoverContent
+                      className="w-80 p-4 border-2 border-muted rounded-lg shadow-lg bg-background"
+                      align="end"
+                    >
                       <div className="space-y-4">
                         <h3 className="font-semibold text-sm flex items-center gap-2">
                           <MessageSquare className="h-4 w-4 text-primary" />
@@ -225,7 +232,10 @@ export default function RootLayout({
                             placeholder="Type a message..."
                             className="flex-1"
                           />
-                          <Button size="sm" className="bg-primary text-primary-foreground">
+                          <Button
+                            size="sm"
+                            className="bg-primary text-primary-foreground"
+                          >
                             Send
                           </Button>
                         </div>
@@ -236,13 +246,17 @@ export default function RootLayout({
               </header>
 
               {/* Main Content */}
-              <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+              <main className="flex-1 overflow-auto p-4 md:p-6">
+                {children}
+              </main>
 
               {/* Mobile Navigation Overlay (Non-Admin) */}
               <div
                 className={cn(
                   "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r flex flex-col transform transition-all duration-300 ease-in-out md:hidden",
-                  isMobileNavOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+                  isMobileNavOpen
+                    ? "translate-x-0 opacity-100"
+                    : "-translate-x-full opacity-0"
                 )}
               >
                 <div className="p-6 border-b flex justify-between items-center">
@@ -268,7 +282,10 @@ export default function RootLayout({
                       Dashboard
                     </Button>
                   </Link>
-                  <Link href="/reception" onClick={() => setIsMobileNavOpen(false)}>
+                  <Link
+                    href="/reception"
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-left hover:bg-muted transition-colors duration-200 group"
@@ -277,7 +294,10 @@ export default function RootLayout({
                       Reception
                     </Button>
                   </Link>
-                  <Link href="/examination" onClick={() => setIsMobileNavOpen(false)}>
+                  <Link
+                    href="/examination"
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-left hover:bg-muted transition-colors duration-200 group"
@@ -295,7 +315,10 @@ export default function RootLayout({
                       Sales
                     </Button>
                   </Link>
-                  <Link href="/clients" onClick={() => setIsMobileNavOpen(false)}>
+                  <Link
+                    href="/clients"
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-left hover:bg-muted transition-colors duration-200 group"
@@ -304,13 +327,25 @@ export default function RootLayout({
                       All Clients
                     </Button>
                   </Link>
-                  <Link href="/existing-clients" onClick={() => setIsMobileNavOpen(false)}>
+                  <Link
+                    href="/existing-clients"
+                    onClick={() => setIsMobileNavOpen(false)}
+                  >
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-left hover:bg-muted transition-colors duration-200 group"
                     >
                       <Search className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
                       Existing Clients
+                    </Button>
+                  </Link>
+                  <Link href="/admin" onClick={() => setIsMobileNavOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-left hover:bg-muted transition-colors duration-200 group"
+                    >
+                      <BarChart className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                      Admin
                     </Button>
                   </Link>
                   <Link href="/admin" onClick={() => setIsMobileNavOpen(false)}>
