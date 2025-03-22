@@ -28,6 +28,8 @@ urlpatterns = [
     
     # API Endpoints
     path('admin/', admin.site.urls),
+    path('api/v001/admin-f/', include('administration.api.urls')), # Administration app routes
+    path('api/v001/analytics/', include('analytics.api.urls')), # Analytics app routes
     path('api/v001/clients/', include('clients.api.urls')), # Clients app routes
     path('api/v001/auth/', lambda request: redirect('/')), # redirect to '/'
     path('api/v001/auth/', include('djoser.urls')), # Djoser  routes
