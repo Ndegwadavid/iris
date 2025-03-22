@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     # Your apps
     "users.apps.UsersConfig",
     "clients.apps.ClientsConfig",
+    "administration.apps.AdministrationConfig",
+    "analytics.apps.AnalyticsConfig"
 ]
 
 MIDDLEWARE = [
@@ -53,7 +55,8 @@ MIDDLEWARE = [
     
     # Custom Middlewares
     'middlewares.custom_404.Custom404Middleware',
-    'middlewares.is_admin_create_user.IsAdminCreateUser'
+    'middlewares.is_admin_create_user.IsAdminCreateUser',
+    'middlewares.api_request_logger.APIRequestLoggerMiddleware'
    
 ]
 
