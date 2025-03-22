@@ -10,4 +10,4 @@ export { getClientExaminations } from "./getClientExaminations";
 export { registerExamination } from "./reisterExamination";
 export { getClientsWithBalance } from "./getClientsWithBalance";
 export { payBalance } from "./payBalance";
-export { getSingleClient } from "./getSingleClient";
+
