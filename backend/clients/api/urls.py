@@ -41,8 +41,8 @@ urlpatterns = [
     path('sales/search-client-balance/', SearchClientBalanceView.as_view(), name='search-client-balance'),
     
     ## this missing urls tomatch the localhost:3000/clients
-    path('clients/', RetrieveClientView.as_view(), name='client_list'),
-    path('clients/client/<uuid:id>/', RetrieveClientView.as_view(), name='client_detail'),
+    #path('clients/', RetrieveClientView.as_view(), name='client_list'),
+    #path('clients/client/<uuid:id>/', SingleClientInfoView(), name='client_detail'),
     path('clients/search-client/', views.SearchClientView.as_view(), name='search-client'),
     ## branches view
 
