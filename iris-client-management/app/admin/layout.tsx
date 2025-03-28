@@ -43,12 +43,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [pendingTasks, setPendingTasks] = useState(3);
 
   useEffect(() => {
-    // Authentication check
-    if (pathname === "/admin/login") return;
-    if (!isAuthenticated()) {
-      router.push("/admin/login");
-    }
-
     // Simulate real-time updates
     const statusInterval = setInterval(() => {
       setPendingTasks(Math.floor(Math.random() * 5));

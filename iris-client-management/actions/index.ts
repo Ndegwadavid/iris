@@ -11,3 +11,5 @@ export { registerExamination } from "./reisterExamination";
 export { getClientsWithBalance } from "./getClientsWithBalance";
 export { payBalance } from "./payBalance";
 export { getSingleClient } from "./getSingleClient";
+export { getAnalytics } from "./getAnalytics";
+export { getClients } from "./getClients";

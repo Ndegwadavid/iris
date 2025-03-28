@@ -182,6 +182,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION" : True,
     "AUTH_HEADER_TYPES": ("JWT", 'Bearer'),
     "SIGNING_KEY": config('SECRET_KEY'),
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.CustomTokenObtainPairSerializer",
 }
 
 

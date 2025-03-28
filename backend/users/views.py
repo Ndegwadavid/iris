@@ -4,9 +4,12 @@ from rest_framework.response import Response
 from django.conf import settings
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from .serializers import CustomTokenObtainPairSerializer
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+    
     def post (self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         
