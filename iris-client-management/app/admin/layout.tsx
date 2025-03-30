@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/utils/auth";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getSytemInfo } from "@/actions";
+import { useFetch } from "@/hooks";
 import {
   Building2,
   LayoutDashboard,
@@ -27,20 +29,34 @@ import {
   Plus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [systemStatus, setSystemStatus] = useState("operational");
   const [pendingTasks, setPendingTasks] = useState(3);
+  const { data, loading, error } = useFetch(getSytemInfo);
 
   useEffect(() => {
     // Simulate real-time updates
@@ -77,7 +93,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Button>
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-lg font-bold text-primary hidden sm:block">Admin Iris</span>
+            <span className="text-lg font-bold text-primary hidden sm:block">
+              Admin Iris
+            </span>
           </div>
         </div>
 
@@ -102,11 +120,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push("/admin/clients/new")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/clients/new")}
+              >
                 <Users className="mr-2 h-4 w-4" />
                 Add Client
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/admin/inventory/new")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/inventory/new")}
+              >
                 <Glasses className="mr-2 h-4 w-4" />
                 Add Inventory
               </DropdownMenuItem>
@@ -116,30 +138,67 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* System Status Monitor */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="hidden md:flex items-center gap-1">
-                <Shield className={`h-4 w-4 ${systemStatus === "operational" ? "text-green-500" : "text-yellow-500"}`} />
-                <span className="text-xs">{systemStatus === "operational" ? "All Good" : "Issues"}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden md:flex items-center gap-1"
+              >
+                {loading ? (
+                  null
+                ) : (
+                  <Shield
+                    className={`h-4 w-4 ${
+                      data?.system_status === "Degraded Performance"
+                        ? "text-yellow-500"
+                        : "text-green-500"
+                    }`}
+                  />
+                )}
+                <span className="text-xs">
+                  {loading
+                    ? "Server Loading..."
+                    : data?.system_status === "Degraded Performance"
+                    ? "Issues"
+                    : "All Good"}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-3">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-sm">System Monitor</h4>
-                  <Button variant="ghost" size="sm" onClick={() => setSystemStatus("operational")}>
-                    <RefreshCw className="h-4 w-4" />
+              {loading ? (
+                <div className="text-center text-sm text-gray-500">
+                  Server Loading...
+                </div>
+              ) : error ? (
+                <div className="text-center text-sm text-red-500">
+                  Error fetching data
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">System Monitor</h4>
+                    <Button variant="ghost" size="sm">
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        data?.system_status === "Degraded Performance"
+                          ? "bg-yellow-500"
+                          : "bg-green-500"
+                      } animate-pulse`}
+                    />
+                    <span>{data?.system_status || "Unknown Status"}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    CPU: {data?.CPU || "N/A"} | Memory: {data?.Memory || "N/A"}{" "}
+                    | Uptime: {data?.Uptime || "N/A"}
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full mt-2">
+                    View Detailed Status
                   </Button>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className={`h-2 w-2 rounded-full ${systemStatus === "operational" ? "bg-green-500" : "bg-yellow-500"} animate-pulse`} />
-                  <span>{systemStatus === "operational" ? "All Systems Operational" : "Minor Issues Detected"}</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  CPU: 65% | Memory: 72% | Uptime: 99.9%
-                </div>
-                <Button variant="outline" size="sm" className="w-full mt-2">
-                  View Detailed Status
-                </Button>
-              </div>
+              )}
             </PopoverContent>
           </Popover>
 
@@ -180,29 +239,44 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Real-time Clock */}
           <div className="hidden lg:flex items-center gap-1 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span>
+              {new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
           </div>
 
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
-            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">5</Badge>
+            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">
+              5
+            </Badge>
           </Button>
 
           {/* Quick Actions - Desktop */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="hidden md:flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex items-center gap-1"
+              >
                 <Plus className="h-4 w-4" />
                 <span className="text-sm">Quick Actions</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => router.push("/admin/clients/new")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/clients/new")}
+              >
                 <Users className="mr-2 h-4 w-4" />
                 Add Client
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/admin/inventory/new")}>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/inventory/new")}
+              >
                 <Glasses className="mr-2 h-4 w-4" />
                 Add Inventory
               </DropdownMenuItem>
@@ -226,7 +300,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <MessageSquare className="h-5 w-5" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-4 border rounded-lg shadow-lg bg-background" align="end">
+            <PopoverContent
+              className="w-80 p-4 border rounded-lg shadow-lg bg-background"
+              align="end"
+            >
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-primary" />
@@ -234,7 +311,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </h3>
                 <div className="bg-muted/20 p-2 rounded-md text-xs">
                   <p>Need help with admin tasks?</p>
-                  <p className="text-xs text-muted-foreground mt-1">— Admin Bot</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    — Admin Bot
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Input placeholder="Message..." className="flex-1 text-sm" />
@@ -262,7 +341,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-destructive"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
@@ -281,13 +363,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex justify-between items-center">
             <span className="text-lg font-bold text-primary">Menu</span>
-            <Button variant="ghost" size="icon" onClick={() => setIsMobileNavOpen(false)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileNavOpen(false)}
+            >
               <X className="h-5 w-5" />
             </Button>
           </div>
           <nav className="flex-1 p-2 space-y-1">
             {[
-              { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
+              {
+                icon: LayoutDashboard,
+                label: "Dashboard",
+                path: "/admin/dashboard",
+              },
               { icon: Glasses, label: "Inventory", path: "/admin/inventory" },
               { icon: Users, label: "Clients", path: "/admin/clients" },
               { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
@@ -334,7 +424,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <nav className="flex-1 p-2 space-y-1">
           {[
-            { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
+            {
+              icon: LayoutDashboard,
+              label: "Dashboard",
+              path: "/admin/dashboard",
+            },
             { icon: Glasses, label: "Inventory", path: "/admin/inventory" },
             { icon: Users, label: "Clients", path: "/admin/clients" },
             { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },

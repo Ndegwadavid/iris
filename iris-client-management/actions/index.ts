@@ -12,4 +12,7 @@ export { getClientsWithBalance } from "./getClientsWithBalance";
 export { payBalance } from "./payBalance";
 export { getSingleClient } from "./getSingleClient";
 export { getAnalytics } from "./getAnalytics";
-export { getClients } from "./getClients";
+export { getSytemInfo } from "./getSytemInfo";
+export { createBranch } from "./createBranch";
+export { createStaff } from "./createStaff";
+export { getStaff } from "./getStaff";

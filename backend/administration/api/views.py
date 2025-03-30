@@ -19,6 +19,13 @@ from django.shortcuts import get_object_or_404
 
 UserAccount = get_user_model()
 
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+import psutil
+import datetime
+from django.db import connections, OperationalError
+
 class SystemInfo(APIView):
     def get(self, request, *args, **kwargs):
         try:
@@ -62,11 +69,11 @@ class SystemInfo(APIView):
             )
         
         except Exception as e:
-            # If an error occurs, assume the server is down
             return Response(
-                {"server_status": "Server Down",},
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 
 
