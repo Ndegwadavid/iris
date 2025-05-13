@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 export const useFetch = (
-  action: (param: string) => Promise<any>,
+  action: (param?: string) => Promise<any>,
   param : string = ''
 ) => {
   const [data, setData] = useState<any | null>(null);

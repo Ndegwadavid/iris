@@ -111,55 +111,6 @@ export default function ClientsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  // Database Integration Section (Commented Out)
-  /*
-  // Fetch clients from the database on component mount
-  useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await fetch('/api/clients', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${yourAuthToken}`, // Uncomment and add token if required
-          },
-        });
-        if (!response.ok) throw new Error('Failed to fetch clients');
-        const data: Client[] = await response.json();
-        setClients(data);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-        setClients(sampleClients); // Fallback to sample data on error
-      }
-    };
-
-    fetchClients();
-  }, []);
-
-  // Delete clients from the database
-  const deleteClientsFromDB = async (ids: number[]) => {
-    try {
-      const response = await fetch('/api/clients', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ids }),
-      });
-      if (!response.ok) throw new Error('Failed to delete clients');
-      setClients(prev => prev.filter(client => !ids.includes(client.id)));
-      setSelectedClients([]);
-    } catch (error) {
-      console.error("Error deleting clients:", error);
-    }
-  };
-
-  // Example usage with database
-  // const confirmDelete = () => {
-  //   deleteClientsFromDB(selectedClients);
-  //   setIsDeleteDialogOpen(false);
-  // };
-  */
 
   return (
     <div className="space-y-6">

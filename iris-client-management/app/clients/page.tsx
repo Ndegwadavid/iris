@@ -17,7 +17,7 @@ export default function ClientsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadClients(""); // Fetch all clients on page load works fine
+    loadClients("");
   }, [toast]);
 
   const loadClients = async (query: string) => {
@@ -119,7 +119,7 @@ export default function ClientsPage() {
                       : "N/A"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/clients/client?id=${client.id}`}>
+                    <Link href={`/clients/client/${client.id}`}> {/* Updated to dynamic route */}
                       <Button size="sm" variant="ghost">
                         <Eye className="mr-2 h-4 w-4" />
                         View
